@@ -64,7 +64,7 @@ textarea{resize:vertical;min-height:60px}
 
 /* 아이디어 카드들 */
 .ideas-grid{display:flex;flex-direction:column;gap:6px;margin-top:10px}
-.idea-card{background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:12px 16px;cursor:pointer;transition:all .2s;font-size:13px;text-align:left}
+.idea-card{background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:12px 16px;cursor:pointer;transition:all .2s;font-size:13px;text-align:left;color:var(--t)}
 .idea-card:hover{border-color:var(--a);color:var(--a)}
 .idea-card.selected{border-color:var(--a);background:rgba(108,99,255,.1);color:var(--a)}
 
@@ -111,6 +111,17 @@ textarea{resize:vertical;min-height:60px}
 .target-btn.active{background:rgba(108,99,255,.15);border-color:var(--a);color:var(--a)}
 .target-btn:hover{border-color:var(--a);color:var(--a)}
 .target-sub{font-size:10px;font-weight:400;color:inherit;opacity:.7}
+.version-badge{display:inline-block;margin-top:8px;padding:3px 12px;background:var(--s2);border:1px solid var(--b);border-radius:20px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--m)}
+
+/* 로딩 스피너 */
+.spinner-overlay{position:fixed;inset:0;background:rgba(10,10,15,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(4px);display:none}
+.spinner-overlay.show{display:flex}
+.spinner{width:52px;height:52px;border:3px solid var(--b);border-top:3px solid var(--a);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner-text{font-size:14px;font-weight:700;color:var(--t);margin-bottom:6px}
+.spinner-sub{font-size:12px;color:var(--m);font-family:'JetBrains Mono',monospace}
+.spinner-dots::after{content:'';animation:dots 1.5s steps(4,end) infinite}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}100%{content:''}}
 .divider{height:1px;background:var(--b);margin:14px 0}
 .flex-row{display:flex;gap:8px}
 .flex-row .btn{flex:1}
@@ -126,10 +137,18 @@ textarea{resize:vertical;min-height:60px}
 </head>
 <body>
 
+<!-- 로딩 스피너 오버레이 -->
+<div class="spinner-overlay" id="spinnerOverlay">
+  <div class="spinner"></div>
+  <div class="spinner-text" id="spinnerText">처리 중</div>
+  <div class="spinner-sub spinner-dots" id="spinnerSub"></div>
+</div>
+
 <div class="hdr">
   <span class="bear">🐻</span>
   <h1>야찌곰 자동화 대시보드 v2</h1>
   <p>채널 분석 → 소재 발굴 → 대본 → 이미지 자동 생성</p>
+  <div class="version-badge">v2.01</div>
 </div>
 
 <!-- 탭 -->
@@ -320,6 +339,16 @@ window.addEventListener('load', () => {
   }
 });
 
+// ── 스피너 제어 ──────────────────────────────────────
+function showSpinner(text, sub) {
+  document.getElementById('spinnerText').textContent = text || '처리 중';
+  document.getElementById('spinnerSub').textContent = sub || '';
+  document.getElementById('spinnerOverlay').classList.add('show');
+}
+function hideSpinner() {
+  document.getElementById('spinnerOverlay').classList.remove('show');
+}
+
 // ── 탭 전환 ──────────────────────────────────────────
 function switchTab(t) {
   document.querySelectorAll('.tab').forEach((el,i) => {
@@ -434,12 +463,15 @@ async function runScriptOnly() {
   if (!claudeKey) { alert('Claude API 키를 입력해주세요'); switchTab('setup'); return; }
   document.getElementById('logBox').classList.add('show');
   lastLogCount = 0;
+  showSpinner('✍️ 대본 생성 중', 'Claude AI 처리 중');
   setStep('s1','active','생성 중...');
   await fetch('/generate-script',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({claude_key:claudeKey,topic:selectedTopic})});
   await waitForStatus('script_ready');
   setStep('s1','done','완료');
   setStep('s2','done','완료');
   setProgress(40);
+  showSpinner('🎨 이미지 생성 중', 'fal.ai LoRA 처리 중');
+  hideSpinner();
   addLog('✅ 대본 생성 완료! 이미지 생성 버튼을 눌러요.', 'ok');
 }
 
@@ -461,11 +493,13 @@ async function runImagesOnly() {
   if (!d.md_content) { alert('먼저 대본을 생성해주세요'); return; }
   if (!falKey) { alert('FAL API 키를 입력해주세요'); switchTab('setup'); return; }
   document.getElementById('logBox').classList.add('show');
+  showSpinner('🎨 이미지 생성 중', 'fal.ai LoRA 처리 중');
   setStep('s3','active','생성 중...');
   await fetch('/generate-images',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fal_key:falKey,lora_url:loraUrl,md_content:d.md_content})});
   await waitForStatus('done');
   setStep('s3','done','완료');
   setProgress(100);
+  hideSpinner();
   const final = await (await fetch('/state')).json();
   showResult(final);
 }
@@ -481,12 +515,14 @@ async function runAll() {
 
   document.getElementById('runBtn').disabled = true;
   document.getElementById('runBtn').textContent = '⏳ 실행 중...';
+  showSpinner('✍️ 대본 생성 중', 'Claude AI 처리 중');
   document.getElementById('logBox').innerHTML = '';
   document.getElementById('logBox').classList.add('show');
   lastLogCount = 0;
   ['s1','s2','s3','s4'].forEach(id=>setStep(id,'','대기중'));
 
   // 1. 대본 생성
+  showSpinner('✍️ 대본 생성 중', 'Claude AI 처리 중');
   setStep('s1','active','생성 중...');
   await fetch('/generate-script',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({claude_key:claudeKey,topic:selectedTopic})});
 
@@ -495,9 +531,11 @@ async function runAll() {
   setStep('s1','done','완료');
   setStep('s2','done','완료');
   setProgress(40);
+  showSpinner('🎨 이미지 생성 중', 'fal.ai LoRA 처리 중');
 
   // 2. 이미지 생성
   const stateData = await (await fetch('/state')).json();
+  showSpinner('🎨 이미지 생성 중', 'fal.ai LoRA 처리 중');
   setStep('s3','active','생성 중...');
   await fetch('/generate-images',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fal_key:falKey,lora_url:loraUrl,md_content:stateData.md_content})});
 
@@ -510,6 +548,7 @@ async function runAll() {
   // 결과 표시
   const final = await (await fetch('/state')).json();
   showResult(final);
+  hideSpinner();
   document.getElementById('runBtn').disabled = false;
   document.getElementById('runBtn').textContent = '🚀 전체 자동 실행';
 }
