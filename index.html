@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>야찌곰 자동화 v2</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+:root {
+  --bg:#0a0a0f; --s:#12121a; --s2:#1a1a26; --b:#2a2a3a;
+  --a:#6c63ff; --a2:#ff6584; --g:#00d4a0; --y:#ffd166;
+  --t:#e8e8f0; --m:#6b6b8a; --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--t);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding:24px 20px;max-width:760px;margin:0 auto}
+body{background-image:radial-gradient(ellipse at 20% 20%,rgba(108,99,255,.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(255,101,132,.06) 0%,transparent 60%)}
+
+/* 헤더 */
+.hdr{text-align:center;margin-bottom:32px}
+.bear{font-size:44px;display:block;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.hdr h1{font-size:26px;font-weight:900;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:6px 0 4px}
+.hdr p{color:var(--m);font-size:12px;font-family:'JetBrains Mono',monospace}
+
+/* 탭 */
+.tabs{display:flex;gap:4px;background:var(--s);border-radius:var(--r);padding:4px;margin-bottom:20px}
+.tab{flex:1;padding:10px;border:none;background:transparent;color:var(--m);font-size:13px;font-weight:700;font-family:'Noto Sans KR',sans-serif;border-radius:8px;cursor:pointer;transition:all .2s}
+.tab.active{background:var(--a);color:white}
+
+/* 패널 */
+.panel{display:none}
+.panel.active{display:block}
+
+/* 카드 */
+.card{background:var(--s);border:1px solid var(--b);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.clabel{font-size:11px;font-weight:700;color:var(--m);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+
+/* 입력 */
+input,textarea{width:100%;background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:10px 14px;color:var(--t);font-family:'Noto Sans KR',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+input:focus,textarea:focus{border-color:var(--a)}
+input::placeholder,textarea::placeholder{color:var(--m)}
+textarea{resize:vertical;min-height:60px}
+
+.row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.row:last-child{margin-bottom:0}
+.lbl{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--m);min-width:80px;font-weight:700}
+
+/* URL 입력 그룹 */
+.url-group{display:flex;flex-direction:column;gap:6px}
+.url-row{display:flex;gap:8px}
+.url-row input{flex:1}
+.add-url{padding:10px 14px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--m);font-size:12px;cursor:pointer;white-space:nowrap;transition:all .2s}
+.add-url:hover{border-color:var(--a);color:var(--a)}
+
+/* 버튼들 */
+.btn{padding:11px 20px;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--a);color:white}
+.btn-primary:hover:not(:disabled){background:#7c74ff;transform:translateY(-1px)}
+.btn-secondary{background:var(--s2);border:1px solid var(--b);color:var(--t)}
+.btn-secondary:hover{border-color:var(--a);color:var(--a)}
+.btn-green{background:var(--g);color:#0a0a0f}
+.btn-full{width:100%;padding:16px;font-size:15px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* 아이디어 카드들 */
+.ideas-grid{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.idea-card{background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:12px 16px;cursor:pointer;transition:all .2s;font-size:13px;text-align:left}
+.idea-card:hover{border-color:var(--a);color:var(--a)}
+.idea-card.selected{border-color:var(--a);background:rgba(108,99,255,.1);color:var(--a)}
+
+/* 파이프라인 스텝 */
+.steps{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.step{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;transition:all .3s;position:relative;overflow:hidden}
+.step::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--b);transition:background .3s}
+.step.active::before{background:var(--a)}
+.step.done::before{background:var(--g)}
+.step.active{border-color:rgba(108,99,255,.3);background:rgba(108,99,255,.05)}
+.step.done{border-color:rgba(0,212,160,.2)}
+.snum{width:26px;height:26px;border-radius:50%;background:var(--s2);border:1px solid var(--b);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--m);flex-shrink:0;transition:all .3s}
+.step.active .snum{background:var(--a);border-color:var(--a);color:white;animation:pulse 1.5s ease-in-out infinite}
+.step.done .snum{background:var(--g);border-color:var(--g);color:#0a0a0f}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(108,99,255,.4)}50%{box-shadow:0 0 0 6px rgba(108,99,255,0)}}
+.sinfo{flex:1}
+.stitle{font-size:13px;font-weight:700;margin-bottom:1px}
+.sdesc{font-size:11px;color:var(--m)}
+.sbadge{font-size:10px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:20px;background:var(--s2);color:var(--m);flex-shrink:0}
+.step.active .sbadge{background:rgba(108,99,255,.2);color:var(--a)}
+.step.done .sbadge{background:rgba(0,212,160,.15);color:var(--g)}
+
+/* 진행률 */
+.pbar{height:2px;background:var(--b);border-radius:2px;margin-bottom:14px}
+.pfill{height:100%;background:linear-gradient(90deg,var(--a),var(--g));border-radius:2px;transition:width .6s ease;width:0%}
+
+/* 로그 */
+.log-box{background:var(--s2);border-radius:8px;padding:12px;max-height:150px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.9;margin-top:10px;display:none}
+.log-box.show{display:block}
+.lok{color:var(--g)}.lerr{color:var(--a2)}.linfo{color:var(--m)}
+
+/* 결과 이미지 */
+.img-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.img-grid img{width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:8px;border:1px solid var(--b);cursor:pointer;transition:transform .2s}
+.img-grid img:hover{transform:scale(1.03)}
+
+/* MD 미리보기 */
+.md-view{background:var(--s2);border-radius:8px;padding:14px;font-size:11px;line-height:1.8;color:var(--m);max-height:250px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;margin-top:10px;display:none}
+.md-view.show{display:block}
+
+.step-run-btn{padding:4px 12px;background:var(--s2);border:1px solid var(--b);border-radius:6px;color:var(--m);font-size:11px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .2s;white-space:nowrap}
+.step-run-btn:hover{border-color:var(--a);color:var(--a)}
+.target-btn{flex:1;padding:10px 4px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--m);font-size:13px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:2px}
+.target-btn.active{background:rgba(108,99,255,.15);border-color:var(--a);color:var(--a)}
+.target-btn:hover{border-color:var(--a);color:var(--a)}
+.target-sub{font-size:10px;font-weight:400;color:inherit;opacity:.7}
+.divider{height:1px;background:var(--b);margin:14px 0}
+.flex-row{display:flex;gap:8px}
+.flex-row .btn{flex:1}
+
+/* 결과 섹션 */
+.result-box{background:var(--s);border:1px solid rgba(0,212,160,.25);border-radius:var(--r);padding:18px;margin-top:14px;display:none}
+.result-box.show{display:block}
+.rtop{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ricon{font-size:30px}
+.rtitle{font-size:16px;font-weight:900;color:var(--g)}
+.rsub{font-size:12px;color:var(--m)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <span class="bear">🐻</span>
+  <h1>야찌곰 자동화 대시보드 v2</h1>
+  <p>채널 분석 → 소재 발굴 → 대본 → 이미지 자동 생성</p>
+</div>
+
+<!-- 탭 -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('setup')">⚙️ 설정</button>
+  <button class="tab" onclick="switchTab('ideas')">💡 소재 발굴</button>
+  <button class="tab" onclick="switchTab('generate')">🚀 생성</button>
+  <button class="tab" onclick="switchTab('result')">🎉 결과</button>
+</div>
+
+<!-- 설정 탭 -->
+<div class="panel active" id="tab-setup">
+  <div class="card">
+    <div class="clabel">🔑 API 키 설정</div>
+    <div class="row"><span class="lbl">CLAUDE</span><input type="password" id="claudeKey" placeholder="sk-ant-... (Anthropic API 키)"></div>
+    <div class="row"><span class="lbl">FAL.AI</span><input type="password" id="falKey" placeholder="fal.ai API 키"></div>
+    <div class="row"><span class="lbl">LORA URL</span><input type="text" id="loraUrl" value="https://v3b.fal.media/files/b/0a967354/026xTQy_0glfwRTC-dRJ7_pytorch_lora_weights.safetensors"></div>
+    <div class="notice">💡 API 키는 서버에 저장되지 않아요. Claude 키: <a href="https://console.anthropic.com" target="_blank" style="color:var(--y)">console.anthropic.com</a></div>
+  </div>
+
+  <div class="card">
+    <div class="clabel">📺 참고 채널 자막 수집 (선택)</div>
+    <div class="url-group" id="urlGroup">
+      <div class="url-row">
+        <input type="text" placeholder="유튜브 영상 URL (예: https://youtu.be/xxxxx)">
+        <button class="add-url" onclick="addUrl()">+ 추가</button>
+      </div>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="fetchTranscripts()">자막 수집</button>
+      <span id="transcriptStatus" style="font-size:12px;color:var(--m);align-self:center"></span>
+    </div>
+    <div class="notice">💡 자막을 수집하면 채널 문체를 학습해서 더 자연스러운 대본이 나와요. 건너뛰어도 돼요.</div>
+  </div>
+
+  <button class="btn btn-primary btn-full" onclick="switchTab('ideas')">다음 → 소재 발굴</button>
+</div>
+
+<!-- 소재 발굴 탭 -->
+<div class="panel" id="tab-ideas">
+  <div class="card">
+    <div class="clabel">💡 소재 아이디어 자동 발굴</div>
+    <div class="clabel" style="margin-bottom:8px">👥 타겟 연령대</div>
+    <div style="display:flex;gap:6px;margin-bottom:2px">
+      <button class="target-btn active" data-target="20대" onclick="selectTarget(this)">20대<span class="target-sub">취업·부업</span></button>
+      <button class="target-btn" data-target="30대" onclick="selectTarget(this)">30대<span class="target-sub">직장·내집</span></button>
+      <button class="target-btn" data-target="40대" onclick="selectTarget(this)">40대<span class="target-sub">노후·교육</span></button>
+      <button class="target-btn" data-target="50대" onclick="selectTarget(this)">50대<span class="target-sub">은퇴·연금</span></button>
+    </div>
+    <input type="hidden" id="target" value="20대">
+    <div class="row" style="margin-top:6px">
+      <span class="lbl">검색 방식</span>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+        <input type="checkbox" id="useWeb" checked style="width:16px;height:16px;accent-color:var(--a)">
+        <span>오늘 뉴스 기반 <span style="font-size:11px;color:var(--g)">📡 실시간</span></span>
+      </label>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-primary" style="flex:1" onclick="getIdeas(false)">🔍 아이디어 10개 뽑아줘</button>
+      <button class="btn btn-secondary" id="regenBtn" onclick="getIdeas(true)" title="다른 아이디어 10개 더 생성">🔄 재생성</button>
+    </div>
+    <div id="ideasSource" style="font-size:11px;color:var(--m);margin-top:6px;display:none"></div>
+    <div class="ideas-grid" id="ideasGrid"></div>
+    <div id="ideasCount" style="font-size:11px;color:var(--m);margin-top:8px;text-align:right;display:none"></div>
+  </div>
+
+  <div class="card" id="customTopicCard">
+    <div class="clabel">✏️ 또는 직접 입력</div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="customTopic" placeholder="예: 삼성전자가 미국 공장 짓는 진짜 이유">
+      <button class="btn btn-primary" onclick="selectCustomTopic()">선택</button>
+    </div>
+  </div>
+
+  <div class="card" id="selectedTopicCard" style="display:none;border-color:rgba(108,99,255,.3)">
+    <div class="clabel">✅ 선택된 주제</div>
+    <div id="selectedTopicText" style="font-size:15px;font-weight:700;color:var(--a)"></div>
+  </div>
+
+  <button class="btn btn-primary btn-full" onclick="goToGenerate()">다음 → 대본 + 이미지 생성</button>
+</div>
+
+<!-- 생성 탭 -->
+<div class="panel" id="tab-generate">
+  <div class="card">
+    <div class="clabel">📋 현재 주제</div>
+    <div id="currentTopicDisplay" style="font-size:15px;font-weight:700;color:var(--a);margin-bottom:10px">주제 없음</div>
+    <button class="btn btn-secondary" onclick="switchTab('ideas')" style="font-size:12px;padding:8px 14px">← 주제 변경</button>
+  </div>
+
+  <!-- 파이프라인 -->
+  <div class="steps">
+    <div class="step" id="s1">
+      <div class="snum">1</div>
+      <div class="sinfo"><div class="stitle">✍️ 대본 생성</div><div class="sdesc">Claude AI · 충청도 사투리 · 6장면</div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="sbadge" id="b1">대기중</div>
+        <button class="step-run-btn" onclick="runScriptOnly()">실행</button>
+      </div>
+    </div>
+    <div class="step" id="s2">
+      <div class="snum">2</div>
+      <div class="sinfo"><div class="stitle">📐 프롬프트 추출</div><div class="sdesc">MD 파싱 · 이미지 명령어 분리</div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="sbadge" id="b2">대기중</div>
+        <button class="step-run-btn" onclick="runExtractOnly()">확인</button>
+      </div>
+    </div>
+    <div class="step" id="s3">
+      <div class="snum">3</div>
+      <div class="sinfo"><div class="stitle">🎨 이미지 생성</div><div class="sdesc">fal.ai · LoRA · 6장 자동 생성</div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="sbadge" id="b3">대기중</div>
+        <button class="step-run-btn" onclick="runImagesOnly()">실행</button>
+      </div>
+    </div>
+    <div class="step" id="s4">
+      <div class="snum">4</div>
+      <div class="sinfo"><div class="stitle">🔊 TTS + CapCut</div><div class="sdesc">ElevenLabs · JSON 조립</div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="sbadge" id="b4">준비중</div>
+        <button class="step-run-btn" style="opacity:.4;cursor:not-allowed">준비중</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pbar"><div class="pfill" id="pfill"></div></div>
+  <div class="log-box" id="logBox"></div>
+
+  <div class="flex-row" style="margin-top:14px">
+    <button class="btn btn-primary btn-full" id="runBtn" onclick="runAll()">🚀 전체 자동 실행</button>
+    <button class="btn btn-secondary" onclick="fetch('/reset',{method:'POST'}).then(()=>location.reload())" style="padding:11px 14px;white-space:nowrap">↺ 초기화</button>
+  </div>
+</div>
+
+<!-- 결과 탭 -->
+<div class="panel" id="tab-result">
+  <div class="result-box show" id="resultBox">
+    <div class="rtop">
+      <div class="ricon">🎉</div>
+      <div><div class="rtitle">생성 완료!</div><div class="rsub" id="resultSub">대기 중...</div></div>
+    </div>
+    <div class="img-grid" id="imgGrid"></div>
+    <div class="divider"></div>
+    <div class="flex-row">
+      <button class="btn btn-primary" onclick="window.open('/download-md','_blank')">📄 MD 다운로드</button>
+      <button class="btn btn-secondary" onclick="toggleMD()">👀 대본 보기</button>
+      <button class="btn btn-secondary" onclick="newProject()">🔄 새 영상</button>
+    </div>
+    <div class="md-view" id="mdView"></div>
+  </div>
+</div>
+
+<script>
+let selectedTopic = '';
+let polling = null;
+let lastLogCount = 0;
+
+// ── API 키 자동 저장/불러오기 ─────────────────────────
+const SAVE_KEYS = ['claudeKey','falKey','loraUrl'];
+
+function saveKeys() {
+  SAVE_KEYS.forEach(id => {
+    const v = document.getElementById(id)?.value;
+    if (v !== undefined) localStorage.setItem('yazzigom_'+id, v);
+  });
+}
+
+function loadKeys() {
+  SAVE_KEYS.forEach(id => {
+    const v = localStorage.getItem('yazzigom_'+id);
+    if (v) { const el = document.getElementById(id); if (el) el.value = v; }
+  });
+}
+
+window.addEventListener('load', () => {
+  loadKeys();
+  SAVE_KEYS.forEach(id => {
+    document.getElementById(id)?.addEventListener('input', saveKeys);
+  });
+  const saved = localStorage.getItem('yazzigom_claudeKey');
+  if (saved) {
+    const notice = document.createElement('div');
+    notice.style = 'font-size:11px;color:var(--g);margin-top:6px';
+    notice.textContent = '✅ 저장된 API 키 불러옴';
+    document.querySelector('.card')?.appendChild(notice);
+    setTimeout(() => notice.remove(), 3000);
+  }
+});
+
+// ── 탭 전환 ──────────────────────────────────────────
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    const tabs = ['setup','ideas','generate','result'];
+    el.classList.toggle('active', tabs[i]===t);
+  });
+  document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  if (t==='generate' && selectedTopic) {
+    document.getElementById('currentTopicDisplay').textContent = selectedTopic;
+  }
+}
+
+// ── URL 추가 ─────────────────────────────────────────
+function addUrl() {
+  const g = document.getElementById('urlGroup');
+  const row = document.createElement('div');
+  row.className = 'url-row';
+  row.innerHTML = `<input type="text" placeholder="유튜브 영상 URL"><button class="add-url" onclick="this.parentElement.remove()">✕ 제거</button>`;
+  g.appendChild(row);
+}
+
+// ── 자막 수집 ─────────────────────────────────────────
+async function fetchTranscripts() {
+  const inputs = document.querySelectorAll('#urlGroup input');
+  const urls = [...inputs].map(i=>i.value.trim()).filter(Boolean);
+  if (!urls.length) { alert('URL을 입력해주세요'); return; }
+  document.getElementById('transcriptStatus').textContent = '수집 중...';
+  try {
+    const r = await fetch('/get-transcript',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({urls})});
+    const d = await r.json();
+    const ok = d.results.filter(x=>x.ok).length;
+    document.getElementById('transcriptStatus').textContent = `✅ ${ok}개 수집 완료 (${d.total}자)`;
+  } catch(e) {
+    document.getElementById('transcriptStatus').textContent = '❌ 실패: '+e.message;
+  }
+}
+
+// ── 타겟 선택 ────────────────────────────────
+function selectTarget(btn) {
+  document.querySelectorAll('.target-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('target').value = btn.dataset.target;
+  // 타겟 바꾸면 기존 아이디어 초기화
+  document.getElementById('ideasGrid').innerHTML = '';
+  document.getElementById('ideasSource').style.display = 'none';
+  document.getElementById('ideasCount').style.display = 'none';
+  allIdeas = [];
+}
+
+// ── 아이디어 발굴 ─────────────────────────────────────
+async function getIdeas() {
+  const claudeKey = document.getElementById('claudeKey').value.trim();
+  if (!claudeKey) { alert('설정 탭에서 Claude API 키를 먼저 입력해주세요'); switchTab('setup'); return; }
+  const target = document.getElementById('target').value;
+  document.getElementById('ideasGrid').innerHTML = '<div style="color:var(--m);font-size:12px;padding:10px">아이디어 생성 중...</div>';
+  try {
+    await fetch('/get-ideas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({claude_key:claudeKey,target})});
+    pollIdeas();
+  } catch(e) { alert('오류: '+e.message); }
+}
+
+function pollIdeas() {
+  const iv = setInterval(async()=>{
+    const r = await fetch('/state');
+    const d = await r.json();
+    if (d.status==='ideas_ready' || d.ideas.length>0) {
+      clearInterval(iv);
+      renderIdeas(d.ideas);
+    }
+    if (d.status==='error') { clearInterval(iv); document.getElementById('ideasGrid').innerHTML='<div style="color:var(--a2)">오류 발생</div>'; }
+  }, 1500);
+}
+
+function renderIdeas(ideas) {
+  const g = document.getElementById('ideasGrid');
+  g.innerHTML = '';
+  ideas.forEach(idea => {
+    const card = document.createElement('button');
+    card.className = 'idea-card';
+    card.textContent = idea;
+    card.onclick = () => {
+      document.querySelectorAll('.idea-card').forEach(c=>c.classList.remove('selected'));
+      card.classList.add('selected');
+      setTopic(idea);
+    };
+    g.appendChild(card);
+  });
+}
+
+function selectCustomTopic() {
+  const v = document.getElementById('customTopic').value.trim();
+  if (!v) { alert('주제를 입력해주세요'); return; }
+  setTopic(v);
+}
+
+function setTopic(topic) {
+  selectedTopic = topic;
+  document.getElementById('selectedTopicCard').style.display = 'block';
+  document.getElementById('selectedTopicText').textContent = '📌 ' + topic;
+}
+
+function goToGenerate() {
+  if (!selectedTopic) { alert('주제를 선택하거나 입력해주세요'); return; }
+  switchTab('generate');
+}
+
+// ── 개별 실행: 대본만 ────────────────────────────────
+async function runScriptOnly() {
+  const claudeKey = document.getElementById('claudeKey').value.trim();
+  if (!selectedTopic) { alert('주제를 먼저 선택해주세요'); switchTab('ideas'); return; }
+  if (!claudeKey) { alert('Claude API 키를 입력해주세요'); switchTab('setup'); return; }
+  document.getElementById('logBox').classList.add('show');
+  lastLogCount = 0;
+  setStep('s1','active','생성 중...');
+  await fetch('/generate-script',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({claude_key:claudeKey,topic:selectedTopic})});
+  await waitForStatus('script_ready');
+  setStep('s1','done','완료');
+  setStep('s2','done','완료');
+  setProgress(40);
+  addLog('✅ 대본 생성 완료! 이미지 생성 버튼을 눌러요.', 'ok');
+}
+
+// ── 개별 실행: 대본 내용 확인 ────────────────────────
+async function runExtractOnly() {
+  const d = await (await fetch('/state')).json();
+  if (!d.md_content) { alert('먼저 대본을 생성해주세요'); return; }
+  document.getElementById('mdView').textContent = d.md_content;
+  document.getElementById('mdView').classList.add('show');
+  switchTab('result');
+  document.getElementById('resultSub').textContent = '대본 생성됨 — 이미지 생성 전';
+}
+
+// ── 개별 실행: 이미지만 ──────────────────────────────
+async function runImagesOnly() {
+  const falKey = document.getElementById('falKey').value.trim();
+  const loraUrl = document.getElementById('loraUrl').value.trim();
+  const d = await (await fetch('/state')).json();
+  if (!d.md_content) { alert('먼저 대본을 생성해주세요'); return; }
+  if (!falKey) { alert('FAL API 키를 입력해주세요'); switchTab('setup'); return; }
+  document.getElementById('logBox').classList.add('show');
+  setStep('s3','active','생성 중...');
+  await fetch('/generate-images',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fal_key:falKey,lora_url:loraUrl,md_content:d.md_content})});
+  await waitForStatus('done');
+  setStep('s3','done','완료');
+  setProgress(100);
+  const final = await (await fetch('/state')).json();
+  showResult(final);
+}
+
+// ── 전체 실행 ─────────────────────────────────────────
+async function runAll() {
+  const claudeKey = document.getElementById('claudeKey').value.trim();
+  const falKey = document.getElementById('falKey').value.trim();
+  const loraUrl = document.getElementById('loraUrl').value.trim();
+  if (!selectedTopic) { alert('주제를 먼저 선택해주세요'); switchTab('ideas'); return; }
+  if (!claudeKey) { alert('Claude API 키를 입력해주세요'); switchTab('setup'); return; }
+  if (!falKey) { alert('FAL API 키를 입력해주세요'); switchTab('setup'); return; }
+
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('runBtn').textContent = '⏳ 실행 중...';
+  document.getElementById('logBox').innerHTML = '';
+  document.getElementById('logBox').classList.add('show');
+  lastLogCount = 0;
+  ['s1','s2','s3','s4'].forEach(id=>setStep(id,'','대기중'));
+
+  // 1. 대본 생성
+  setStep('s1','active','생성 중...');
+  await fetch('/generate-script',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({claude_key:claudeKey,topic:selectedTopic})});
+
+  // 대본 완료 대기
+  await waitForStatus('script_ready');
+  setStep('s1','done','완료');
+  setStep('s2','done','완료');
+  setProgress(40);
+
+  // 2. 이미지 생성
+  const stateData = await (await fetch('/state')).json();
+  setStep('s3','active','생성 중...');
+  await fetch('/generate-images',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fal_key:falKey,lora_url:loraUrl,md_content:stateData.md_content})});
+
+  // 이미지 완료 대기
+  await waitForStatus('done');
+  setStep('s3','done','완료');
+  setStep('s4','done','준비중');
+  setProgress(100);
+
+  // 결과 표시
+  const final = await (await fetch('/state')).json();
+  showResult(final);
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('runBtn').textContent = '🚀 전체 자동 실행';
+}
+
+async function waitForStatus(targetStatus) {
+  return new Promise(resolve => {
+    const iv = setInterval(async()=>{
+      const r = await fetch('/state');
+      const d = await r.json();
+      // 새 로그 출력
+      if (d.logs.length > lastLogCount) {
+        for (let i=lastLogCount;i<d.logs.length;i++) addLog(d.logs[i].msg, d.logs[i].type);
+        lastLogCount = d.logs.length;
+      }
+      // 이미지 프리뷰
+      if (d.images.length > 0) updateResultImages(d.images);
+      if (d.status === targetStatus || d.status === 'error') { clearInterval(iv); resolve(d); }
+    }, 1500);
+  });
+}
+
+function addLog(msg, type) {
+  const box = document.getElementById('logBox');
+  const line = document.createElement('div');
+  line.className = type==='ok'?'lok':type==='err'?'lerr':'linfo';
+  line.textContent = `[${new Date().toLocaleTimeString('ko-KR')}] ${msg}`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function setStep(id, state, badge) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'step'+(state?' '+state:'');
+  const badgeEl = el.querySelector('.sbadge');
+  if (badgeEl) badgeEl.textContent = badge;
+  if (state==='done') el.querySelector('.snum').textContent='✓';
+}
+
+function setProgress(pct) {
+  document.getElementById('pfill').style.width = pct+'%';
+}
+
+function updateResultImages(urls) {
+  const g = document.getElementById('imgGrid');
+  if (g.children.length >= urls.length) return;
+  g.innerHTML = '';
+  urls.forEach(url => {
+    const img = document.createElement('img');
+    img.src = url; img.loading='lazy';
+    g.appendChild(img);
+  });
+}
+
+function showResult(data) {
+  document.getElementById('resultSub').textContent = `이미지 ${data.images.length}장 + MD 파일 생성 완료!`;
+  updateResultImages(data.images);
+  if (data.md_content) document.getElementById('mdView').textContent = data.md_content;
+  switchTab('result');
+}
+
+function toggleMD() {
+  const v = document.getElementById('mdView');
+  v.classList.toggle('show');
+}
+
+function newProject() {
+  fetch('/reset',{method:'POST'}).then(()=>{
+    selectedTopic=''; lastLogCount=0;
+    switchTab('ideas');
+    document.getElementById('ideasGrid').innerHTML='';
+    document.getElementById('selectedTopicCard').style.display='none';
+    document.getElementById('imgGrid').innerHTML='';
+    document.getElementById('logBox').innerHTML='';
+    document.getElementById('pfill').style.width='0%';
+    ['s1','s2','s3','s4'].forEach(id=>setStep(id,'','대기중'));
+  });
+}
+</script>
+</body>
+</html>

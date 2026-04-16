@@ -1,0 +1,8 @@
+flask
+flask-cors
+anthropic
+fal-client
+youtube-transcript-api
+feedparser
+pytrends
+gunicorn
