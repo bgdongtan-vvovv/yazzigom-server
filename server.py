@@ -71,43 +71,55 @@ def get_transcript_route():
 TARGET_PROFILES = {
     "20대": {
         "label": "20대",
-        "keywords": ["취업", "알바", "대학", "월세", "부업", "코인", "인스타", "연애"],
+        "keywords": ["취업", "알바", "월세", "부업", "코인", "인스타", "연애", "대출"],
         "rss": [
-            "https://rss.donga.com/economy.xml",
-            "https://www.yonhapnewstv.co.kr/browse/rss/recent",
+            "https://rss.donga.com/economy.xml",           # 경제 뉴스
+            "https://www.khan.co.kr/rss/rssdata/economy_news.xml",  # 경향 경제
+            "https://www.mk.co.kr/rss/40300001/",          # 매경 취업/창업
+            "https://rss.etnews.com/Section901.xml",        # IT/테크 (코인/스타트업)
         ],
-        "google_kw": ["취업 현실", "2030 부업", "20대 재테크", "청년 정책"],
-        "desc": "취업/재테크/트렌드에 민감한 20대"
+        "google_kw": ["취업 현실 2024", "청년 부업", "20대 재테크", "청년 정책 혜택", "월세 대출"],
+        "desc": "취업·부업·월세·코인에 민감한 20대",
+        "angle": "취업난, 돈 없는 현실, 정부 혜택 꿀팁, 부업으로 탈출하는 법"
     },
     "30대": {
         "label": "30대",
-        "keywords": ["직장", "육아", "내집마련", "이직", "주식", "부동산", "워라밸"],
+        "keywords": ["직장", "육아", "내집마련", "이직", "주식", "부동산", "워라밸", "어린이집"],
         "rss": [
             "https://rss.donga.com/economy.xml",
-            "https://feeds.macrumors.com/MacRumors-All",
+            "https://www.mk.co.kr/rss/30100041/",          # 매경 부동산
+            "https://land.naver.com/news/rss.nhn",         # 네이버 부동산 뉴스
+            "https://www.khan.co.kr/rss/rssdata/economy_news.xml",
         ],
-        "google_kw": ["30대 재테크", "직장인 부업", "내집마련", "이직 준비"],
-        "desc": "직장/내집마련/재테크 고민하는 30대"
+        "google_kw": ["30대 내집마련", "전세 사기 예방", "이직 연봉 협상", "육아휴직 현실", "주식 투자"],
+        "desc": "내집마련·이직·육아 고민하는 30대 직장인",
+        "angle": "전세 사기, 내집마련 현실, 이직 시장, 워라밸 vs 연봉"
     },
     "40대": {
         "label": "40대",
-        "keywords": ["노후", "자녀교육", "부동산", "건강", "은퇴", "투자", "중간관리자"],
+        "keywords": ["자녀교육", "입시", "부동산", "건강검진", "노후준비", "중간관리자", "명예퇴직"],
         "rss": [
             "https://rss.donga.com/economy.xml",
-            "https://rss.joins.com/joongang_economy_list.xml",
+            "https://www.mk.co.kr/rss/30100041/",          # 매경 부동산
+            "https://health.chosun.com/rss/news.xml",      # 조선 건강
+            "https://edu.chosun.com/rss/news.xml",         # 조선 교육
         ],
-        "google_kw": ["40대 노후준비", "자녀교육비", "부동산 전망", "건강보험"],
-        "desc": "노후/자녀교육/부동산 관심 40대"
+        "google_kw": ["40대 명예퇴직", "자녀 입시 현실", "부동산 세금", "건강보험료", "노후자금"],
+        "desc": "자녀교육·노후준비·명예퇴직 걱정하는 40대",
+        "angle": "회사에서 밀려나는 현실, 입시 전쟁, 부동산 세금 폭탄, 건강 적신호"
     },
     "50대": {
         "label": "50대",
-        "keywords": ["은퇴", "연금", "노후", "건강", "자녀독립", "귀농", "재취업"],
+        "keywords": ["국민연금", "은퇴", "건강", "자녀독립", "재취업", "귀농", "노인복지"],
         "rss": [
+            "https://health.chosun.com/rss/news.xml",      # 조선 건강
+            "https://www.mk.co.kr/rss/30000001/",          # 매경 경제
             "https://rss.donga.com/economy.xml",
-            "https://rss.joins.com/joongang_economy_list.xml",
+            "https://www.hankyung.com/feed/economy",       # 한경 경제
         ],
-        "google_kw": ["50대 은퇴준비", "국민연금", "노후자금", "재취업"],
-        "desc": "은퇴/연금/건강 관심 50대"
+        "google_kw": ["국민연금 수령액", "50대 재취업", "노후 건강관리", "은퇴 후 생활비", "귀농 현실"],
+        "desc": "연금·건강·은퇴 후 삶 준비하는 50대",
+        "angle": "연금 덜 받는 현실, 재취업 벽, 건강보험료 폭탄, 노후자금 얼마나 필요한가"
     },
 }
 
@@ -226,20 +238,28 @@ def get_ideas():
 야찌곰은 충청도 사투리를 쓰는 피곤한 직장인 흰색 곰 캐릭터야.
 타겟: {profile['desc']}
 핵심 관심사: {', '.join(profile['keywords'])}
+이 타겟의 핵심 각도: {profile.get('angle', '뉴스 뒤의 진짜 이야기 폭로')}
 뉴스 뒤의 진짜 이야기를 폭로하는 정보성 숏츠 채널이야."""
 
-            user_prompt = f"""아래 실시간 데이터를 참고해서 {target} 타겟에 맞는 야찌곰 스타일 숏츠 아이디어 10개를 만들어줘.
+            user_prompt = f"""아래 실시간 뉴스를 참고해서 {target} 타겟에 딱 맞는 야찌곰 숏츠 아이디어 10개를 만들어줘.
 
 {context}
 
+[{target} 타겟 핵심 관심사]
+{chr(10).join([f"- {k}" for k in profile['keywords']])}
+
+[이 타겟에 먹히는 각도]
+{profile.get('angle', '뉴스 뒤의 진짜 이야기')}
+
 조건:
-- {target} {profile['desc']} 관심사에 딱 맞는 주제
-- 뉴스 헤드라인에서 "진짜 이유", "숨겨진 사실" 각도로 비틀기
-- 제목은 궁금증을 유발하는 형태로
+- 반드시 {target} 의 일상/고민과 직결되는 주제만
+- 뉴스 헤드라인을 {target} 시각으로 비틀기 ("나한테 무슨 영향?", "진짜 이유는?")
+- 제목은 30자 이내, 클릭하고 싶은 형태
+- 다른 연령대 관심사 주제 제외
 - 이미 나온 아이디어 제외:
 {exclude_str}
 
-제목만 10개:
+제목만 10개 (번호 포함):
 1."""
 
             if use_web:
