@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>야찌곰 자동화 대시보드</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --green: #00d4a0;
+    --yellow: #ffd166;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    padding: 32px 24px;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(108,99,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(255,101,132,0.06) 0%, transparent 60%);
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .header .bear { font-size: 48px; margin-bottom: 8px; animation: float 3s ease-in-out infinite; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+
+  .header p {
+    color: var(--muted);
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* MD 파일 입력 */
+  .input-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .input-section label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .file-drop {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .file-drop:hover, .file-drop.dragover {
+    border-color: var(--accent);
+    background: rgba(108,99,255,0.05);
+  }
+
+  .file-drop input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .file-drop .icon { font-size: 28px; margin-bottom: 8px; }
+  .file-drop .hint { font-size: 13px; color: var(--muted); }
+  .file-drop .filename { font-size: 14px; font-weight: 700; color: var(--green); margin-top: 4px; display: none; }
+
+  /* API 키 섹션 */
+  .api-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .api-section label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .api-input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+  }
+
+  .api-input-row span {
+    font-size: 12px;
+    color: var(--muted);
+    min-width: 80px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .api-input-row input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .api-input-row input:focus { border-color: var(--accent); }
+  .api-input-row input::placeholder { color: var(--muted); }
+
+  /* 파이프라인 스텝 */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .step::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+
+  .step.active::before { background: var(--accent); }
+  .step.done::before { background: var(--green); }
+  .step.error::before { background: var(--accent2); }
+
+  .step.active {
+    border-color: rgba(108,99,255,0.3);
+    background: rgba(108,99,255,0.05);
+  }
+
+  .step.done {
+    border-color: rgba(0,212,160,0.2);
+    background: rgba(0,212,160,0.03);
+  }
+
+  .step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+
+  .step.active .step-num {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  .step.done .step-num {
+    background: var(--green);
+    border-color: var(--green);
+    color: #0a0a0f;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(108,99,255,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(108,99,255,0); }
+  }
+
+  .step-info { flex: 1; }
+
+  .step-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .step-desc {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .step-status {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--surface2);
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .step.active .step-status {
+    background: rgba(108,99,255,0.2);
+    color: var(--accent);
+  }
+
+  .step.done .step-status {
+    background: rgba(0,212,160,0.15);
+    color: var(--green);
+  }
+
+  .step.error .step-status {
+    background: rgba(255,101,132,0.15);
+    color: var(--accent2);
+  }
+
+  /* 로그 */
+  .log-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 24px;
+    display: none;
+  }
+
+  .log-section.visible { display: block; }
+
+  .log-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .log-content {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    max-height: 160px;
+    overflow-y: auto;
+    line-height: 1.8;
+  }
+
+  .log-content .log-ok { color: var(--green); }
+  .log-content .log-err { color: var(--accent2); }
+  .log-content .log-info { color: var(--accent); }
+
+  /* 시작 버튼 */
+  .start-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border: none;
+    border-radius: var(--radius);
+    color: white;
+    font-size: 16px;
+    font-weight: 900;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .start-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(108,99,255,0.4);
+  }
+
+  .start-btn:active:not(:disabled) { transform: translateY(0); }
+
+  .start-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .start-btn .btn-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* 결과 섹션 */
+  .result-section {
+    background: var(--surface);
+    border: 1px solid rgba(0,212,160,0.3);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-top: 24px;
+    display: none;
+    text-align: center;
+  }
+
+  .result-section.visible { display: block; }
+  .result-section .result-icon { font-size: 40px; margin-bottom: 8px; }
+  .result-section h3 { font-size: 18px; font-weight: 900; color: var(--green); margin-bottom: 4px; }
+  .result-section p { font-size: 13px; color: var(--muted); }
+
+  .result-images {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .result-images img {
+    width: 100%;
+    aspect-ratio: 9/16;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  /* 진행률 바 */
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .progress-bar.visible { display: block; }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  /* ElevenLabs 섹션 */
+  .tts-notice {
+    background: rgba(255,209,102,0.08);
+    border: 1px solid rgba(255,209,102,0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--yellow);
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="bear">🐻</div>
+  <h1>야찌곰 자동화 대시보드</h1>
+  <p>md 파일 → 이미지 자동 생성 파이프라인</p>
+</div>
+
+<!-- MD 파일 업로드 -->
+<div class="input-section">
+  <label>📄 대본 MD 파일</label>
+  <div class="file-drop" id="fileDrop">
+    <input type="file" id="mdFile" accept=".md">
+    <div class="icon">📝</div>
+    <div class="hint">MD 파일을 여기에 드래그하거나 클릭해서 선택</div>
+    <div class="filename" id="fileName"></div>
+  </div>
+</div>
+
+<!-- API 키 -->
+<div class="api-section">
+  <label>🔑 API 설정</label>
+  <div class="api-input-row">
+    <span>FAL KEY</span>
+    <input type="password" id="falKey" placeholder="fal.ai API 키 입력" autocomplete="off">
+  </div>
+  <div class="api-input-row">
+    <span>LORA URL</span>
+    <input type="text" id="loraUrl" placeholder="LoRA safetensors URL" value="https://v3b.fal.media/files/b/0a967354/026xTQy_0glfwRTC-dRJ7_pytorch_lora_weights.safetensors">
+  </div>
+  <div class="api-input-row">
+    <span>XI KEY</span>
+    <input type="password" id="xiKey" placeholder="ElevenLabs API 키 (선택)">
+  </div>
+  <div class="tts-notice">
+    <span>⚡</span>
+    <span>ElevenLabs 키가 없으면 이미지 생성까지만 진행돼요. TTS는 나중에 추가할 수 있어요.</span>
+  </div>
+</div>
+
+<!-- 파이프라인 스텝 -->
+<div class="pipeline">
+  <div class="step" id="step1">
+    <div class="step-num">1</div>
+    <div class="step-info">
+      <div class="step-title">📄 MD 파일 파싱</div>
+      <div class="step-desc">대본, 이미지 프롬프트 추출</div>
+    </div>
+    <div class="step-status">대기중</div>
+  </div>
+  <div class="step" id="step2">
+    <div class="step-num">2</div>
+    <div class="step-info">
+      <div class="step-title">🎨 이미지 자동 생성</div>
+      <div class="step-desc">LoRA 적용 · fal.ai · 6장 생성</div>
+    </div>
+    <div class="step-status">대기중</div>
+  </div>
+  <div class="step" id="step3">
+    <div class="step-num">3</div>
+    <div class="step-info">
+      <div class="step-title">🔊 TTS 음성 생성</div>
+      <div class="step-desc">ElevenLabs · 대본 → MP3</div>
+    </div>
+    <div class="step-status">대기중</div>
+  </div>
+  <div class="step" id="step4">
+    <div class="step-num">4</div>
+    <div class="step-info">
+      <div class="step-title">🎬 CapCut JSON 생성</div>
+      <div class="step-desc">이미지 + 음성 + 자막 조립</div>
+    </div>
+    <div class="step-status">대기중</div>
+  </div>
+</div>
+
+<!-- 진행률 바 -->
+<div class="progress-bar" id="progressBar">
+  <div class="progress-fill" id="progressFill"></div>
+</div>
+
+<!-- 로그 -->
+<div class="log-section" id="logSection">
+  <div class="log-header">실행 로그</div>
+  <div class="log-content" id="logContent"></div>
+</div>
+
+<!-- 시작 버튼 -->
+<button class="start-btn" id="startBtn" onclick="startPipeline()">
+  <div class="btn-inner">
+    <span>🚀</span>
+    <span>자동화 시작</span>
+  </div>
+</button>
+
+<!-- 결과 -->
+<div class="result-section" id="resultSection">
+  <div class="result-icon">🎉</div>
+  <h3>생성 완료!</h3>
+  <p id="resultMsg">이미지 6장이 생성됐어요</p>
+  <div class="result-images" id="resultImages"></div>
+</div>
+
+<script>
+  let mdContent = '';
+  let mdFileName = '';
+
+  // 파일 드래그 앤 드롭
+  const fileDrop = document.getElementById('fileDrop');
+  const mdFile = document.getElementById('mdFile');
+
+  fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.classList.add('dragover'); });
+  fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('dragover'));
+  fileDrop.addEventListener('drop', e => {
+    e.preventDefault();
+    fileDrop.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) loadMdFile(file);
+  });
+
+  mdFile.addEventListener('change', e => {
+    if (e.target.files[0]) loadMdFile(e.target.files[0]);
+  });
+
+  function loadMdFile(file) {
+    mdFileName = file.name;
+    const reader = new FileReader();
+    reader.onload = e => {
+      mdContent = e.target.result;
+      document.getElementById('fileName').textContent = '✓ ' + file.name;
+      document.getElementById('fileName').style.display = 'block';
+      log('info', `MD 파일 로드됨: ${file.name} (${mdContent.length}자)`);
+    };
+    reader.readAsText(file);
+  }
+
+  function log(type, msg) {
+    const logSection = document.getElementById('logSection');
+    const logContent = document.getElementById('logContent');
+    logSection.classList.add('visible');
+    const line = document.createElement('div');
+    line.className = type === 'ok' ? 'log-ok' : type === 'err' ? 'log-err' : 'log-info';
+    const time = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    line.textContent = `[${time}] ${msg}`;
+    logContent.appendChild(line);
+    logContent.scrollTop = logContent.scrollHeight;
+  }
+
+  function setStep(stepId, state, statusText) {
+    const step = document.getElementById(stepId);
+    step.className = 'step ' + state;
+    step.querySelector('.step-status').textContent = statusText;
+    if (state === 'done') {
+      step.querySelector('.step-num').textContent = '✓';
+    }
+  }
+
+  function setProgress(pct) {
+    document.getElementById('progressBar').classList.add('visible');
+    document.getElementById('progressFill').style.width = pct + '%';
+  }
+
+  function extractImagePrompts(md) {
+    const sectionMatch = md.match(/## 이미지 생성 명령어([\s\S]+?)(?=## 영상 생성|$)/);
+    if (!sectionMatch) return [];
+
+    const section = sectionMatch[1];
+    const scenes = section.split(/### 장면 \d+/).filter(s => s.trim());
+
+    return scenes.map((scene, i) => {
+      const lines = scene.split('\n').filter(l => l.trim() && !l.startsWith('**대본:**') && l.trim() !== '---');
+      return { scene: i + 1, prompt: 'YAZZIGOM ' + lines.join(' ').trim() };
+    }).filter(p => p.prompt.length > 10);
+  }
+
+  function extractScript(md) {
+    const match = md.match(/## 대본[^#]*([\s\S]+?)(?=---|##)/);
+    return match ? match[1].trim() : '';
+  }
+
+  async function generateImage(prompt, falKey, loraUrl) {
+    const response = await fetch('https://fal.run/fal-ai/flux-lora', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Key ' + falKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        loras: [{ path: loraUrl, scale: 1.0 }],
+        image_size: 'portrait_16_9',
+        num_inference_steps: 28,
+        guidance_scale: 3.5,
+        num_images: 1,
+        enable_safety_checker: true
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`API 오류: ${response.status} - ${err}`);
+    }
+
+    const data = await response.json();
+    return data.images[0].url;
+  }
+
+  async function startPipeline() {
+    const falKey = document.getElementById('falKey').value.trim();
+    const loraUrl = document.getElementById('loraUrl').value.trim();
+
+    if (!mdContent) { alert('MD 파일을 먼저 선택해주세요!'); return; }
+    if (!falKey) { alert('FAL API 키를 입력해주세요!'); return; }
+
+    const btn = document.getElementById('startBtn');
+    btn.disabled = true;
+    btn.querySelector('.btn-inner span:last-child').textContent = '실행 중...';
+
+    document.getElementById('resultSection').classList.remove('visible');
+    document.getElementById('logContent').innerHTML = '';
+
+    try {
+      // STEP 1: MD 파싱
+      setStep('step1', 'active', '실행 중...');
+      setProgress(10);
+      log('info', 'MD 파일 파싱 시작...');
+
+      const prompts = extractImagePrompts(mdContent);
+      const script = extractScript(mdContent);
+
+      if (prompts.length === 0) {
+        throw new Error('이미지 프롬프트를 찾을 수 없어요. MD 형식을 확인해주세요.');
+      }
+
+      log('ok', `이미지 프롬프트 ${prompts.length}개 발견`);
+      log('ok', `대본 ${script.length}자 추출`);
+      setStep('step1', 'done', '완료');
+      setProgress(25);
+
+      // STEP 2: 이미지 생성
+      setStep('step2', 'active', '생성 중...');
+      log('info', `fal.ai LoRA로 이미지 ${prompts.length}장 생성 시작...`);
+
+      const imageUrls = [];
+      for (let i = 0; i < prompts.length; i++) {
+        const p = prompts[i];
+        log('info', `장면 ${p.scene} 생성 중...`);
+        try {
+          const url = await generateImage(p.prompt, falKey, loraUrl);
+          imageUrls.push(url);
+          log('ok', `장면 ${p.scene} 완료 → ${url.slice(0, 50)}...`);
+          setProgress(25 + (i + 1) / prompts.length * 40);
+        } catch(e) {
+          log('err', `장면 ${p.scene} 실패: ${e.message}`);
+          imageUrls.push(null);
+        }
+        await new Promise(r => setTimeout(r, 500));
+      }
+
+      const successCount = imageUrls.filter(Boolean).length;
+      setStep('step2', successCount > 0 ? 'done' : 'error', `${successCount}/${prompts.length}장`);
+      setProgress(65);
+
+      // STEP 3: TTS (ElevenLabs 키 있으면)
+      const xiKey = document.getElementById('xiKey').value.trim();
+      if (xiKey) {
+        setStep('step3', 'active', '생성 중...');
+        log('info', 'ElevenLabs TTS 생성 중...');
+        await new Promise(r => setTimeout(r, 1000));
+        log('info', 'TTS 기능은 다음 버전에서 추가될 예정이에요');
+        setStep('step3', 'done', '준비 중');
+      } else {
+        setStep('step3', 'done', '건너뜀');
+        log('info', 'ElevenLabs 키 없음 → TTS 건너뜀');
+      }
+      setProgress(80);
+
+      // STEP 4: CapCut JSON (준비 중)
+      setStep('step4', 'active', '준비 중...');
+      log('info', 'CapCut JSON 생성 준비 중...');
+      await new Promise(r => setTimeout(r, 500));
+      log('info', 'CapCut 자동화는 다음 단계에서 추가돼요');
+      setStep('step4', 'done', '준비 중');
+      setProgress(100);
+
+      // 결과 표시
+      const resultSection = document.getElementById('resultSection');
+      const resultImages = document.getElementById('resultImages');
+      const resultMsg = document.getElementById('resultMsg');
+
+      resultImages.innerHTML = '';
+      imageUrls.filter(Boolean).forEach(url => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.loading = 'lazy';
+        resultImages.appendChild(img);
+      });
+
+      resultMsg.textContent = `이미지 ${successCount}장 생성 완료! 저장하려면 이미지를 꾹 눌러주세요.`;
+      resultSection.classList.add('visible');
+      log('ok', `🎉 완료! ${successCount}장 생성됨`);
+
+    } catch(e) {
+      log('err', '오류: ' + e.message);
+      alert('오류가 발생했어요: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.querySelector('.btn-inner span:last-child').textContent = '자동화 시작';
+    }
+  }
+</script>
+</body>
+</html>
