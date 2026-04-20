@@ -6,3 +6,6 @@ youtube-transcript-api
 feedparser
 pytrends
 gunicorn
+requests
+mutagen
+Pillow

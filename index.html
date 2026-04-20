@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>야찌곰 자동화 v2</title>
+<title>야찌곰 자동화 v2.10</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
 :root {
@@ -36,10 +36,11 @@ body{background-image:radial-gradient(ellipse at 20% 20%,rgba(108,99,255,.08) 0%
 .clabel{font-size:11px;font-weight:700;color:var(--m);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px}
 
 /* 입력 */
-input,textarea{width:100%;background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:10px 14px;color:var(--t);font-family:'Noto Sans KR',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
-input:focus,textarea:focus{border-color:var(--a)}
+input,textarea,select{width:100%;background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:10px 14px;color:var(--t);font-family:'Noto Sans KR',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+input:focus,textarea:focus,select:focus{border-color:var(--a)}
 input::placeholder,textarea::placeholder{color:var(--m)}
 textarea{resize:vertical;min-height:60px}
+select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b6b8a' viewBox='0 0 16 16'%3e%3cpath d='M8 10.5l-4-4h8l-4 4z'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
 
 .row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .row:last-child{margin-bottom:0}
@@ -133,6 +134,25 @@ textarea{resize:vertical;min-height:60px}
 .ricon{font-size:30px}
 .rtitle{font-size:16px;font-weight:900;color:var(--g)}
 .rsub{font-size:12px;color:var(--m)}
+
+/* v2.10: CapCut 상태 박스 */
+.capcut-status{padding:10px 12px;border-radius:8px;font-size:12px;line-height:1.6;margin-bottom:12px;background:var(--s2);border:1px solid var(--b)}
+.capcut-status.ok{border-color:rgba(0,212,160,.3);background:rgba(0,212,160,.06)}
+.capcut-status.warn{border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.06)}
+.capcut-status code{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--m);word-break:break-all}
+
+/* v2.10: 모드 라디오 */
+.mode-group{display:flex;gap:6px;margin-bottom:10px}
+.mode-btn{flex:1;padding:8px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--m);font-size:12px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .2s;text-align:center}
+.mode-btn.active{background:rgba(108,99,255,.15);border-color:var(--a);color:var(--a)}
+
+/* v2.10: 작은 버튼 그룹 */
+.mini-btn{padding:6px 12px;background:var(--s2);border:1px solid var(--b);border-radius:6px;color:var(--m);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:'Noto Sans KR',sans-serif}
+.mini-btn:hover{border-color:var(--a);color:var(--a)}
+
+.info-line{font-size:11px;color:var(--m);margin-top:6px;font-family:'JetBrains Mono',monospace}
+.info-line.ok{color:var(--g)}
+.info-line.err{color:var(--a2)}
 </style>
 </head>
 <body>
@@ -147,15 +167,16 @@ textarea{resize:vertical;min-height:60px}
 <div class="hdr">
   <span class="bear">🐻</span>
   <h1>야찌곰 자동화 대시보드 v2</h1>
-  <p>채널 분석 → 소재 발굴 → 대본 → 이미지 자동 생성</p>
-  <div class="version-badge">v2.01</div>
+  <p>채널 분석 → 소재 → 대본 → 이미지 → 음성 → CapCut</p>
+  <div class="version-badge">v2.10</div>
 </div>
 
 <!-- 탭 -->
 <div class="tabs">
   <button class="tab active" onclick="switchTab('setup')">⚙️ 설정</button>
-  <button class="tab" onclick="switchTab('ideas')">💡 소재 발굴</button>
+  <button class="tab" onclick="switchTab('ideas')">💡 소재</button>
   <button class="tab" onclick="switchTab('generate')">🚀 생성</button>
+  <button class="tab" onclick="switchTab('post')">🎬 편집</button>
   <button class="tab" onclick="switchTab('result')">🎉 결과</button>
 </div>
 
@@ -166,7 +187,19 @@ textarea{resize:vertical;min-height:60px}
     <div class="row"><span class="lbl">CLAUDE</span><input type="password" id="claudeKey" placeholder="sk-ant-... (Anthropic API 키)"></div>
     <div class="row"><span class="lbl">FAL.AI</span><input type="password" id="falKey" placeholder="fal.ai API 키"></div>
     <div class="row"><span class="lbl">LORA URL</span><input type="text" id="loraUrl" value="https://v3b.fal.media/files/b/0a967354/026xTQy_0glfwRTC-dRJ7_pytorch_lora_weights.safetensors"></div>
-    <div class="notice">💡 API 키는 서버에 저장되지 않아요. Claude 키: <a href="https://console.anthropic.com" target="_blank" style="color:var(--y)">console.anthropic.com</a></div>
+    <div class="divider"></div>
+    <div class="row"><span class="lbl">ELEVEN</span><input type="password" id="elevenKey" placeholder="sk_... (ElevenLabs API 키)"></div>
+    <div class="row"><span class="lbl">VOICE ID</span><input type="text" id="voiceId" placeholder="Voice ID (예: 21m00Tcm4TlvDq8ikWAM)"></div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button class="mini-btn" onclick="loadVoices()">🔄 내 Voice 목록 불러오기</button>
+      <span id="voiceStatus" class="info-line" style="margin-top:0;align-self:center"></span>
+    </div>
+    <div id="voiceSelectWrap" style="display:none;margin-top:8px">
+      <select id="voiceSelect" onchange="onVoiceSelect()">
+        <option value="">── Voice 선택 ──</option>
+      </select>
+    </div>
+    <div class="notice" style="font-size:11px;color:var(--m);margin-top:10px">💡 API 키는 브라우저에만 저장돼요. 서버에는 저장되지 않아요.</div>
   </div>
 
   <div class="card">
@@ -181,7 +214,7 @@ textarea{resize:vertical;min-height:60px}
       <button class="btn btn-primary" onclick="fetchTranscripts()">자막 수집</button>
       <span id="transcriptStatus" style="font-size:12px;color:var(--m);align-self:center"></span>
     </div>
-    <div class="notice">💡 자막을 수집하면 채널 문체를 학습해서 더 자연스러운 대본이 나와요. 건너뛰어도 돼요.</div>
+    <div class="notice" style="font-size:11px;color:var(--m);margin-top:10px">💡 자막을 수집하면 채널 문체를 학습해서 더 자연스러운 대본이 나와요.</div>
   </div>
 
   <button class="btn btn-primary btn-full" onclick="switchTab('ideas')">다음 → 소재 발굴</button>
@@ -265,22 +298,79 @@ textarea{resize:vertical;min-height:60px}
         <button class="step-run-btn" onclick="runImagesOnly()">실행</button>
       </div>
     </div>
-    <div class="step" id="s4">
-      <div class="snum">4</div>
-      <div class="sinfo"><div class="stitle">🔊 TTS + CapCut</div><div class="sdesc">ElevenLabs · JSON 조립</div></div>
-      <div style="display:flex;gap:6px;align-items:center">
-        <div class="sbadge" id="b4">준비중</div>
-        <button class="step-run-btn" style="opacity:.4;cursor:not-allowed">준비중</button>
-      </div>
-    </div>
   </div>
 
   <div class="pbar"><div class="pfill" id="pfill"></div></div>
   <div class="log-box" id="logBox"></div>
 
   <div class="flex-row" style="margin-top:14px">
-    <button class="btn btn-primary btn-full" id="runBtn" onclick="runAll()">🚀 전체 자동 실행</button>
+    <button class="btn btn-primary btn-full" id="runBtn" onclick="runAll()">🚀 대본+이미지 자동 실행</button>
     <button class="btn btn-secondary" onclick="fetch('/reset',{method:'POST'}).then(()=>location.reload())" style="padding:11px 14px;white-space:nowrap">↺ 초기화</button>
+  </div>
+
+  <div style="margin-top:14px">
+    <button class="btn btn-primary btn-full" onclick="switchTab('post')" style="background:linear-gradient(135deg,var(--a),var(--a2))">다음 → 🎤 음성 + 🎬 CapCut</button>
+  </div>
+</div>
+
+<!-- 🎤🎬 편집 탭 (v2.10 신규) -->
+<div class="panel" id="tab-post">
+  <div class="card">
+    <div class="clabel">📋 현재 주제</div>
+    <div id="postTopicDisplay" style="font-size:15px;font-weight:700;color:var(--a)">주제 없음</div>
+  </div>
+
+  <!-- 파이프라인 -->
+  <div class="steps">
+    <div class="step" id="s4">
+      <div class="snum">4</div>
+      <div class="sinfo"><div class="stitle">🎤 TTS 음성 생성</div><div class="sdesc">ElevenLabs · 장면별 MP3</div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="sbadge" id="b4">대기중</div>
+        <button class="step-run-btn" onclick="runTTSOnly()">실행</button>
+      </div>
+    </div>
+    <div class="step" id="s5">
+      <div class="snum">5</div>
+      <div class="sinfo"><div class="stitle">🎬 CapCut 조립</div><div class="sdesc">draft JSON · 타임라인 자동 생성</div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="sbadge" id="b5">대기중</div>
+        <button class="step-run-btn" onclick="runCapCutOnly()">실행</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TTS 설정 카드 -->
+  <div class="card">
+    <div class="clabel">🎤 TTS 설정</div>
+    <div class="row"><span class="lbl">모델</span>
+      <select id="ttsModel">
+        <option value="eleven_multilingual_v2" selected>multilingual_v2 (안정, 권장)</option>
+        <option value="eleven_v3">v3 (감정 풍부, alpha)</option>
+        <option value="eleven_turbo_v2_5">turbo_v2_5 (빠름)</option>
+      </select>
+    </div>
+    <div id="ttsInfo" class="info-line">장면별 대본을 MP3로 변환하고 싱크를 맞춰요</div>
+  </div>
+
+  <!-- CapCut 설정 카드 -->
+  <div class="card">
+    <div class="clabel">🎬 CapCut 조립</div>
+    <div id="capcutStatus" class="capcut-status">📂 CapCut 폴더 확인 중...</div>
+    <div class="row"><span class="lbl">프로젝트명</span><input type="text" id="projectName" placeholder="자동 생성됨 (야찌곰_주제)"></div>
+
+    <div class="clabel" style="margin-top:14px;margin-bottom:8px">📤 출력 방식</div>
+    <div class="mode-group">
+      <button class="mode-btn active" data-mode="inject" onclick="selectMode(this)">CapCut에 직접 주입</button>
+      <button class="mode-btn" data-mode="zip" onclick="selectMode(this)">ZIP 다운로드</button>
+    </div>
+    <div id="modeHint" class="info-line">CapCut 재실행 시 프로젝트 목록에 자동 등록돼요</div>
+
+    <div id="capcutResult" style="margin-top:12px"></div>
+  </div>
+
+  <div class="flex-row" style="margin-top:14px">
+    <button class="btn btn-primary btn-full" id="postRunBtn" onclick="runPostProduction()" style="background:linear-gradient(135deg,var(--a),var(--a2))">🚀 음성 + CapCut 자동 실행</button>
   </div>
 </div>
 
@@ -304,11 +394,12 @@ textarea{resize:vertical;min-height:60px}
 
 <script>
 let selectedTopic = '';
-let polling = null;
 let lastLogCount = 0;
+let capcutMode = 'inject';
+let allIdeas = [];
 
 // ── API 키 자동 저장/불러오기 ─────────────────────────
-const SAVE_KEYS = ['claudeKey','falKey','loraUrl'];
+const SAVE_KEYS = ['claudeKey','falKey','loraUrl','elevenKey','voiceId'];
 
 function saveKeys() {
   SAVE_KEYS.forEach(id => {
@@ -329,15 +420,28 @@ window.addEventListener('load', () => {
   SAVE_KEYS.forEach(id => {
     document.getElementById(id)?.addEventListener('input', saveKeys);
   });
-  const saved = localStorage.getItem('yazzigom_claudeKey');
-  if (saved) {
-    const notice = document.createElement('div');
-    notice.style = 'font-size:11px;color:var(--g);margin-top:6px';
-    notice.textContent = '✅ 저장된 API 키 불러옴';
-    document.querySelector('.card')?.appendChild(notice);
-    setTimeout(() => notice.remove(), 3000);
-  }
+  checkCapCutPath();
 });
+
+// ── CapCut 폴더 감지 ──────────────────────────────────
+async function checkCapCutPath() {
+  try {
+    const r = await fetch('/check-capcut-path');
+    const d = await r.json();
+    const el = document.getElementById('capcutStatus');
+    if (d.found) {
+      el.classList.add('ok');
+      el.innerHTML = `✅ <b>CapCut 폴더 감지됨</b><br><code>${d.path}</code>`;
+    } else {
+      el.classList.add('warn');
+      el.innerHTML = `⚠️ CapCut 폴더를 찾지 못했어요.<br>CapCut을 한 번 실행해서 초기화한 뒤 새로고침해주세요.<br>(없으면 ZIP 다운로드 모드로 사용)`;
+      // 자동으로 ZIP 모드로 전환
+      selectMode(document.querySelector('.mode-btn[data-mode="zip"]'));
+    }
+  } catch(e) {
+    document.getElementById('capcutStatus').textContent = '❌ 상태 확인 실패';
+  }
+}
 
 // ── 스피너 제어 ──────────────────────────────────────
 function showSpinner(text, sub) {
@@ -351,14 +455,20 @@ function hideSpinner() {
 
 // ── 탭 전환 ──────────────────────────────────────────
 function switchTab(t) {
+  const tabs = ['setup','ideas','generate','post','result'];
   document.querySelectorAll('.tab').forEach((el,i) => {
-    const tabs = ['setup','ideas','generate','result'];
     el.classList.toggle('active', tabs[i]===t);
   });
   document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
   if (t==='generate' && selectedTopic) {
     document.getElementById('currentTopicDisplay').textContent = selectedTopic;
+  }
+  if (t==='post' && selectedTopic) {
+    document.getElementById('postTopicDisplay').textContent = selectedTopic;
+    if (!document.getElementById('projectName').value) {
+      document.getElementById('projectName').value = `야찌곰_${selectedTopic.slice(0,30)}`;
+    }
   }
 }
 
@@ -392,7 +502,6 @@ function selectTarget(btn) {
   document.querySelectorAll('.target-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('target').value = btn.dataset.target;
-  // 타겟 바꾸면 기존 아이디어 초기화
   document.getElementById('ideasGrid').innerHTML = '';
   document.getElementById('ideasSource').style.display = 'none';
   document.getElementById('ideasCount').style.display = 'none';
@@ -400,13 +509,15 @@ function selectTarget(btn) {
 }
 
 // ── 아이디어 발굴 ─────────────────────────────────────
-async function getIdeas() {
+async function getIdeas(regen) {
   const claudeKey = document.getElementById('claudeKey').value.trim();
   if (!claudeKey) { alert('설정 탭에서 Claude API 키를 먼저 입력해주세요'); switchTab('setup'); return; }
   const target = document.getElementById('target').value;
+  const useWeb = document.getElementById('useWeb').checked;
+  const exclude = regen ? allIdeas : [];
   document.getElementById('ideasGrid').innerHTML = '<div style="color:var(--m);font-size:12px;padding:10px">아이디어 생성 중...</div>';
   try {
-    await fetch('/get-ideas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({claude_key:claudeKey,target})});
+    await fetch('/get-ideas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({claude_key:claudeKey,target,use_web:useWeb,exclude})});
     pollIdeas();
   } catch(e) { alert('오류: '+e.message); }
 }
@@ -415,8 +526,9 @@ function pollIdeas() {
   const iv = setInterval(async()=>{
     const r = await fetch('/state');
     const d = await r.json();
-    if (d.status==='ideas_ready' || d.ideas.length>0) {
+    if (d.status==='ideas_ready' && d.ideas.length>0) {
       clearInterval(iv);
+      allIdeas = [...allIdeas, ...d.ideas];
       renderIdeas(d.ideas);
     }
     if (d.status==='error') { clearInterval(iv); document.getElementById('ideasGrid').innerHTML='<div style="color:var(--a2)">오류 발생</div>'; }
@@ -470,7 +582,6 @@ async function runScriptOnly() {
   setStep('s1','done','완료');
   setStep('s2','done','완료');
   setProgress(40);
-  showSpinner('🎨 이미지 생성 중', 'fal.ai LoRA 처리 중');
   hideSpinner();
   addLog('✅ 대본 생성 완료! 이미지 생성 버튼을 눌러요.', 'ok');
 }
@@ -504,7 +615,7 @@ async function runImagesOnly() {
   showResult(final);
 }
 
-// ── 전체 실행 ─────────────────────────────────────────
+// ── 전체 실행 (대본+이미지) ────────────────────────────
 async function runAll() {
   const claudeKey = document.getElementById('claudeKey').value.trim();
   const falKey = document.getElementById('falKey').value.trim();
@@ -519,38 +630,28 @@ async function runAll() {
   document.getElementById('logBox').innerHTML = '';
   document.getElementById('logBox').classList.add('show');
   lastLogCount = 0;
-  ['s1','s2','s3','s4'].forEach(id=>setStep(id,'','대기중'));
+  ['s1','s2','s3'].forEach(id=>setStep(id,'','대기중'));
 
-  // 1. 대본 생성
-  showSpinner('✍️ 대본 생성 중', 'Claude AI 처리 중');
   setStep('s1','active','생성 중...');
   await fetch('/generate-script',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({claude_key:claudeKey,topic:selectedTopic})});
-
-  // 대본 완료 대기
   await waitForStatus('script_ready');
   setStep('s1','done','완료');
   setStep('s2','done','완료');
   setProgress(40);
-  showSpinner('🎨 이미지 생성 중', 'fal.ai LoRA 처리 중');
 
-  // 2. 이미지 생성
   const stateData = await (await fetch('/state')).json();
   showSpinner('🎨 이미지 생성 중', 'fal.ai LoRA 처리 중');
   setStep('s3','active','생성 중...');
   await fetch('/generate-images',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fal_key:falKey,lora_url:loraUrl,md_content:stateData.md_content})});
-
-  // 이미지 완료 대기
   await waitForStatus('done');
   setStep('s3','done','완료');
-  setStep('s4','done','준비중');
   setProgress(100);
 
-  // 결과 표시
   const final = await (await fetch('/state')).json();
   showResult(final);
   hideSpinner();
   document.getElementById('runBtn').disabled = false;
-  document.getElementById('runBtn').textContent = '🚀 전체 자동 실행';
+  document.getElementById('runBtn').textContent = '🚀 대본+이미지 자동 실행';
 }
 
 async function waitForStatus(targetStatus) {
@@ -558,12 +659,10 @@ async function waitForStatus(targetStatus) {
     const iv = setInterval(async()=>{
       const r = await fetch('/state');
       const d = await r.json();
-      // 새 로그 출력
       if (d.logs.length > lastLogCount) {
         for (let i=lastLogCount;i<d.logs.length;i++) addLog(d.logs[i].msg, d.logs[i].type);
         lastLogCount = d.logs.length;
       }
-      // 이미지 프리뷰
       if (d.images.length > 0) updateResultImages(d.images);
       if (d.status === targetStatus || d.status === 'error') { clearInterval(iv); resolve(d); }
     }, 1500);
@@ -586,6 +685,12 @@ function setStep(id, state, badge) {
   const badgeEl = el.querySelector('.sbadge');
   if (badgeEl) badgeEl.textContent = badge;
   if (state==='done') el.querySelector('.snum').textContent='✓';
+  else if (state==='active' || state==='') {
+    // 원래 번호로 복구
+    const numMap = {s1:'1',s2:'2',s3:'3',s4:'4',s5:'5'};
+    const snum = el.querySelector('.snum');
+    if (snum && numMap[id]) snum.textContent = numMap[id];
+  }
 }
 
 function setProgress(pct) {
@@ -624,7 +729,191 @@ function newProject() {
     document.getElementById('imgGrid').innerHTML='';
     document.getElementById('logBox').innerHTML='';
     document.getElementById('pfill').style.width='0%';
-    ['s1','s2','s3','s4'].forEach(id=>setStep(id,'','대기중'));
+    document.getElementById('capcutResult').innerHTML='';
+    ['s1','s2','s3','s4','s5'].forEach(id=>setStep(id,'','대기중'));
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// v2.10: TTS + CapCut 신규 기능
+// ═══════════════════════════════════════════════════════
+
+// ── Voice 목록 불러오기 ───────────────────────────────
+async function loadVoices() {
+  const key = document.getElementById('elevenKey').value.trim();
+  if (!key) { alert('ElevenLabs API 키를 먼저 입력해주세요'); return; }
+  const status = document.getElementById('voiceStatus');
+  status.textContent = '불러오는 중...';
+  status.className = 'info-line';
+  try {
+    const r = await fetch('/list-voices',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({eleven_key:key})});
+    const d = await r.json();
+    if (!d.ok) {
+      status.textContent = '❌ ' + (d.error || '실패');
+      status.className = 'info-line err';
+      return;
+    }
+    const sel = document.getElementById('voiceSelect');
+    sel.innerHTML = '<option value="">── Voice 선택 ──</option>';
+    d.voices.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v.voice_id;
+      opt.textContent = `${v.name} (${v.category})`;
+      sel.appendChild(opt);
+    });
+    document.getElementById('voiceSelectWrap').style.display = 'block';
+    status.textContent = `✅ ${d.voices.length}개 로드됨`;
+    status.className = 'info-line ok';
+  } catch(e) {
+    status.textContent = '❌ ' + e.message;
+    status.className = 'info-line err';
+  }
+}
+
+function onVoiceSelect() {
+  const val = document.getElementById('voiceSelect').value;
+  if (val) {
+    document.getElementById('voiceId').value = val;
+    saveKeys();
+  }
+}
+
+// ── 모드 선택 ────────────────────────────────────────
+function selectMode(btn) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  capcutMode = btn.dataset.mode;
+  const hint = document.getElementById('modeHint');
+  if (capcutMode === 'inject') {
+    hint.textContent = 'CapCut 재실행 시 프로젝트 목록에 자동 등록돼요';
+  } else {
+    hint.textContent = 'ZIP 파일로 받아서 수동으로 배치하거나 보관';
+  }
+}
+
+// ── TTS만 실행 ───────────────────────────────────────
+async function runTTSOnly() {
+  const key = document.getElementById('elevenKey').value.trim();
+  const vid = document.getElementById('voiceId').value.trim();
+  const model = document.getElementById('ttsModel').value;
+  if (!key || !vid) {
+    alert('ElevenLabs API 키와 Voice ID를 설정 탭에서 입력해주세요');
+    switchTab('setup');
+    return;
+  }
+  const d = await (await fetch('/state')).json();
+  if (!d.md_content) {
+    alert('먼저 대본을 생성해주세요 (생성 탭)');
+    switchTab('generate');
+    return;
+  }
+  
+  lastLogCount = d.logs.length;
+  showSpinner('🎤 TTS 생성 중', 'ElevenLabs 처리 중');
+  setStep('s4','active','생성 중...');
+  
+  await fetch('/generate-tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({eleven_key:key,voice_id:vid,model_id:model})});
+  await waitForPostStatus('tts_ready');
+  
+  const final = await (await fetch('/state')).json();
+  const total = (final.audio_files||[]).reduce((s,a)=>s+a.duration_sec,0);
+  setStep('s4','done',`${(final.audio_files||[]).length}개 / ${total.toFixed(1)}s`);
+  document.getElementById('ttsInfo').textContent = `✅ 완료: ${(final.audio_files||[]).length}개 음성 (총 ${total.toFixed(1)}초)`;
+  document.getElementById('ttsInfo').className = 'info-line ok';
+  hideSpinner();
+}
+
+// ── CapCut만 실행 ────────────────────────────────────
+async function runCapCutOnly() {
+  const d = await (await fetch('/state')).json();
+  if (!d.audio_files || !d.audio_files.length) {
+    alert('먼저 TTS를 생성해주세요');
+    return;
+  }
+  const projectName = document.getElementById('projectName').value.trim() || `야찌곰_${selectedTopic.slice(0,30)}`;
+  
+  showSpinner('🎬 CapCut 조립 중', 'draft JSON 생성');
+  setStep('s5','active','조립 중...');
+  
+  try {
+    const r = await fetch('/build-capcut',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project_name:projectName, inject: capcutMode==='inject'})});
+    const res = await r.json();
+    hideSpinner();
+    
+    const resultEl = document.getElementById('capcutResult');
+    if (res.error) {
+      setStep('s5','','실패');
+      resultEl.innerHTML = `<div class="capcut-status" style="border-color:rgba(255,101,132,.3);background:rgba(255,101,132,.06)">❌ ${res.error}</div>`;
+      return;
+    }
+    
+    setStep('s5','done','완료');
+    
+    if (capcutMode === 'inject' && res.ok) {
+      resultEl.innerHTML = `
+        <div class="capcut-status ok">
+          ✅ <b>CapCut 프로젝트 생성 완료!</b><br>
+          📁 <code>${res.project_path}</code><br>
+          ⏱️ 총 ${res.total_duration_sec.toFixed(1)}초 (${res.scenes_count}개 장면)<br>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--b);font-size:11px">
+            <b style="color:var(--y)">다음 단계:</b><br>
+            1. CapCut 앱 <b>완전히 종료</b> (Cmd+Q)<br>
+            2. CapCut 다시 실행<br>
+            3. 프로젝트 목록에 <b>"${projectName}"</b> 확인<br>
+            4. 열어서 편집 → 내보내기
+          </div>
+        </div>
+      `;
+    } else if (capcutMode === 'zip' && res.ok) {
+      resultEl.innerHTML = `
+        <div class="capcut-status ok">
+          ✅ ZIP 생성 완료 (${res.scenes_count}개 장면, ${res.total_duration_sec.toFixed(1)}s)<br>
+          <a href="/download-capcut-zip" download style="display:inline-block;margin-top:8px;padding:8px 16px;background:var(--g);color:#0a0a0f;text-decoration:none;border-radius:6px;font-weight:700;font-size:12px">📥 ZIP 다운로드</a>
+        </div>
+      `;
+    }
+  } catch(e) {
+    hideSpinner();
+    setStep('s5','','실패');
+    document.getElementById('capcutResult').innerHTML = `<div class="capcut-status" style="border-color:rgba(255,101,132,.3)">❌ ${e.message}</div>`;
+  }
+}
+
+// ── 음성 + CapCut 전체 실행 ────────────────────────────
+async function runPostProduction() {
+  const key = document.getElementById('elevenKey').value.trim();
+  const vid = document.getElementById('voiceId').value.trim();
+  if (!key || !vid) {
+    alert('ElevenLabs API 키와 Voice ID를 설정 탭에서 입력해주세요');
+    switchTab('setup');
+    return;
+  }
+  const d = await (await fetch('/state')).json();
+  if (!d.md_content || !d.images.length) {
+    alert('먼저 대본과 이미지를 생성해주세요 (생성 탭)');
+    switchTab('generate');
+    return;
+  }
+  
+  document.getElementById('postRunBtn').disabled = true;
+  document.getElementById('postRunBtn').textContent = '⏳ 실행 중...';
+  
+  await runTTSOnly();
+  await runCapCutOnly();
+  
+  document.getElementById('postRunBtn').disabled = false;
+  document.getElementById('postRunBtn').textContent = '🚀 음성 + CapCut 자동 실행';
+}
+
+// TTS/CapCut용 폴링 (기존 waitForStatus와 별개 상태 사용)
+async function waitForPostStatus(targetStatus) {
+  return new Promise(resolve => {
+    const iv = setInterval(async()=>{
+      const r = await fetch('/state');
+      const d = await r.json();
+      // 로그는 별도 처리 없이 콘솔만
+      if (d.status === targetStatus || d.status === 'error') { clearInterval(iv); resolve(d); }
+    }, 1500);
   });
 }
 </script>

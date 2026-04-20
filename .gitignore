@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.DS_Store
+output/
+venv/
+.env
+
+# 임시/패치 파일
+index_patch.html
+
+# 대용량 zip (나중에 정리)
+# yazzigom_lora.zip
+# yazzigom_lora_v2.zip
