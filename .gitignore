@@ -1,13 +1,30 @@
+# macOS 시스템 파일
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Python
 __pycache__/
 *.pyc
-.DS_Store
+*.pyo
+
+# 생성 결과물 (기기별 다름, 동기화 불필요)
 output/
-venv/
+야지곰_*_images/
+야지곰_*_audio/
+야지곰_*_lora_images/
+
+# LoRA 학습 자료 (용량 큼, 이미 업로드된 URL 사용 중)
+lora_training_images/
+lora_v2_images/
+*.zip
+*.safetensors
+
+# 환경
 .env
+venv/
+.venv/
 
-# 임시/패치 파일
-index_patch.html
-
-# 대용량 zip (나중에 정리)
-# yazzigom_lora.zip
-# yazzigom_lora_v2.zip
+# 캐릭터 이미지 (크기 큼, AirDrop으로 개별 전송)
+캐릭터얼굴.png

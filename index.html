@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>야찌곰 자동화 v2.10</title>
+<title>야찌곰 자동화 v2.15</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
 :root {
@@ -17,8 +17,23 @@ body{background-image:radial-gradient(ellipse at 20% 20%,rgba(108,99,255,.08) 0%
 
 /* 헤더 */
 .hdr{text-align:center;margin-bottom:32px}
-.bear{font-size:44px;display:block;animation:float 3s ease-in-out infinite}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.bear{width:110px;height:110px;display:block;margin:0 auto;animation:float 3s ease-in-out infinite;border-radius:50%;background:radial-gradient(circle at 50% 40%, rgba(108,99,255,.15) 0%, transparent 60%);object-fit:cover}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.hdr h1{font-size:26px;font-weight:900;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:6px 0 4px}
+.hdr p{color:var(--m);font-size:12px;font-family:'JetBrains Mono',monospace}
+
+/* 진행 스텝 인디케이터 */
+.step-flow{display:flex;align-items:center;justify-content:center;gap:4px;margin:14px auto 0;flex-wrap:wrap;max-width:640px}
+.step-flow .sf-item{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:56px}
+.step-flow .sf-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--s2);border:1.5px solid var(--b);color:var(--m);font-size:11px;font-weight:700;transition:all .25s ease;font-family:'JetBrains Mono',monospace}
+.step-flow .sf-item.active .sf-dot{background:linear-gradient(135deg,var(--a),var(--a2));border-color:transparent;color:#fff;box-shadow:0 0 0 4px rgba(108,99,255,.2),0 4px 12px rgba(108,99,255,.4);transform:scale(1.15)}
+.step-flow .sf-item.done .sf-dot{background:rgba(108,99,255,.15);border-color:var(--a);color:var(--a)}
+.step-flow .sf-label{font-size:10px;color:var(--m);font-family:'JetBrains Mono',monospace;transition:color .25s ease}
+.step-flow .sf-item.active .sf-label{color:var(--a);font-weight:700}
+.step-flow .sf-item.done .sf-label{color:var(--t)}
+.step-flow .sf-arrow{color:var(--m);font-size:11px;margin:0 2px;align-self:flex-start;margin-top:8px}
+.step-flow .sf-item.active+.sf-arrow,.step-flow .sf-item.done+.sf-arrow{color:var(--a)}
+@media (max-width:540px){.step-flow .sf-item{min-width:48px}.step-flow .sf-label{font-size:9px}}
 .hdr h1{font-size:26px;font-weight:900;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:6px 0 4px}
 .hdr p{color:var(--m);font-size:12px;font-family:'JetBrains Mono',monospace}
 
@@ -165,10 +180,22 @@ select{appearance:none;-webkit-appearance:none;background-image:url("data:image/
 </div>
 
 <div class="hdr">
-  <span class="bear">🐻</span>
+  <img class="bear" src="/character" alt="야찌곰" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div class=\'bear\' style=\'font-size:80px;line-height:110px\'>🐻</div>')">
   <h1>야찌곰 자동화 대시보드 v2</h1>
-  <p>채널 분석 → 소재 → 대본 → 이미지 → 음성 → CapCut</p>
-  <div class="version-badge">v2.10</div>
+  <div class="step-flow" id="stepFlow">
+    <div class="sf-item" data-step="setup"><div class="sf-dot">1</div><div class="sf-label">채널</div></div>
+    <div class="sf-arrow">→</div>
+    <div class="sf-item" data-step="ideas"><div class="sf-dot">2</div><div class="sf-label">소재</div></div>
+    <div class="sf-arrow">→</div>
+    <div class="sf-item" data-step="script"><div class="sf-dot">3</div><div class="sf-label">대본</div></div>
+    <div class="sf-arrow">→</div>
+    <div class="sf-item" data-step="image"><div class="sf-dot">4</div><div class="sf-label">이미지</div></div>
+    <div class="sf-arrow">→</div>
+    <div class="sf-item" data-step="tts"><div class="sf-dot">5</div><div class="sf-label">음성</div></div>
+    <div class="sf-arrow">→</div>
+    <div class="sf-item" data-step="capcut"><div class="sf-dot">6</div><div class="sf-label">CapCut</div></div>
+  </div>
+  <div class="version-badge">v2.15</div>
 </div>
 
 <!-- 탭 -->
@@ -198,6 +225,48 @@ select{appearance:none;-webkit-appearance:none;background-image:url("data:image/
       <select id="voiceSelect" onchange="onVoiceSelect()">
         <option value="">── Voice 선택 ──</option>
       </select>
+    </div>
+
+    <!-- ElevenLabs 고급 설정 (프리셋) -->
+    <div class="divider" style="margin:14px 0 10px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:12px;color:var(--t);font-weight:700">🎛️ 음성 세부 설정</div>
+      <button class="mini-btn" onclick="document.getElementById('ttsAdvanced').style.display=document.getElementById('ttsAdvanced').style.display==='none'?'block':'none'">펼치기 / 접기</button>
+    </div>
+    <div id="ttsAdvanced" style="display:none;background:var(--s2);padding:12px;border-radius:8px">
+      <div style="font-size:11px;color:var(--m);margin-bottom:8px">📋 <b>ElevenLabs 파일명 붙여넣기로 자동 적용</b>: UI에서 생성한 MP3 파일명을 복붙하면 설정값(속도/안정성/유사도/모델)이 자동으로 파싱됩니다.</div>
+      <input type="text" id="ttsPresetInput" placeholder="예: ElevenLabs_2026-04-20T23_56_50_Liam_..._pre_sp100_s50_sb75_v3.mp3" oninput="parseTTSPreset()" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--b);background:var(--bg);color:var(--t);font-family:'JetBrains Mono',monospace;font-size:11px">
+      <div id="ttsPresetResult" style="margin-top:8px;font-size:11px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+        <div>
+          <label style="font-size:11px;color:var(--m);display:block;margin-bottom:2px">속도 (Speed) <span id="lblSpeed">1.00</span></label>
+          <input type="range" id="ttsSpeed" min="0.5" max="2" step="0.05" value="1" oninput="document.getElementById('lblSpeed').textContent=(+this.value).toFixed(2)" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--m);display:block;margin-bottom:2px">안정성 (Stability) <span id="lblStab">0.50</span></label>
+          <input type="range" id="ttsStability" min="0" max="1" step="0.01" value="0.5" oninput="document.getElementById('lblStab').textContent=(+this.value).toFixed(2)" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--m);display:block;margin-bottom:2px">유사도 (Similarity Boost) <span id="lblSim">0.75</span></label>
+          <input type="range" id="ttsSimilarity" min="0" max="1" step="0.01" value="0.75" oninput="document.getElementById('lblSim').textContent=(+this.value).toFixed(2)" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--m);display:block;margin-bottom:2px">스타일 과장 (Style) <span id="lblStyle">0.00</span></label>
+          <input type="range" id="ttsStyle" min="0" max="1" step="0.01" value="0" oninput="document.getElementById('lblStyle').textContent=(+this.value).toFixed(2)" style="width:100%">
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px;align-items:center">
+        <span style="font-size:11px;color:var(--m)">기본 모델:</span>
+        <select id="ttsModel" style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--b);background:var(--bg);color:var(--t);font-size:11px">
+          <option value="eleven_v3">eleven_v3 (감정 표현 최고, Liam 등 캐릭터)</option>
+          <option value="eleven_multilingual_v2">eleven_multilingual_v2 (한국어 안정)</option>
+          <option value="eleven_flash_v2_5">eleven_flash_v2_5 (빠르고 저렴)</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="mini-btn" onclick="applyTTSPreset('liam_energetic')">🎤 야찌곰 추천 (Liam v3)</button>
+        <button class="mini-btn" onclick="resetTTSDefaults()">🔄 기본값</button>
+      </div>
     </div>
     <div class="notice" style="font-size:11px;color:var(--m);margin-top:10px">💡 API 키는 브라우저에만 저장돼요. 서버에는 저장되지 않아요.</div>
   </div>
@@ -343,13 +412,7 @@ select{appearance:none;-webkit-appearance:none;background-image:url("data:image/
   <!-- TTS 설정 카드 -->
   <div class="card">
     <div class="clabel">🎤 TTS 설정</div>
-    <div class="row"><span class="lbl">모델</span>
-      <select id="ttsModel">
-        <option value="eleven_multilingual_v2" selected>multilingual_v2 (안정, 권장)</option>
-        <option value="eleven_v3">v3 (감정 풍부, alpha)</option>
-        <option value="eleven_turbo_v2_5">turbo_v2_5 (빠름)</option>
-      </select>
-    </div>
+    <div id="ttsSettingSummary" class="info-line" style="font-size:11px">설정 탭에서 음성 세부 설정을 조정할 수 있어요</div>
     <div id="ttsInfo" class="info-line">장면별 대본을 MP3로 변환하고 싱크를 맞춰요</div>
   </div>
 
@@ -399,29 +462,114 @@ let capcutMode = 'inject';
 let allIdeas = [];
 
 // ── API 키 자동 저장/불러오기 ─────────────────────────
-const SAVE_KEYS = ['claudeKey','falKey','loraUrl','elevenKey','voiceId'];
+const SAVE_KEYS = ['claudeKey','falKey','loraUrl','elevenKey','voiceId','ttsModel','ttsSpeed','ttsStability','ttsSimilarity','ttsStyle'];
 
 function saveKeys() {
   SAVE_KEYS.forEach(id => {
     const v = document.getElementById(id)?.value;
     if (v !== undefined) localStorage.setItem('yazzigom_'+id, v);
   });
+  updateTTSSummary();
 }
 
 function loadKeys() {
   SAVE_KEYS.forEach(id => {
     const v = localStorage.getItem('yazzigom_'+id);
-    if (v) { const el = document.getElementById(id); if (el) el.value = v; }
+    if (v) {
+      const el = document.getElementById(id);
+      if (el) el.value = v;
+    }
   });
+  // 슬라이더 라벨 즉시 동기화
+  const syncLabel = (id, lblId, digits=2) => {
+    const el = document.getElementById(id);
+    const lbl = document.getElementById(lblId);
+    if (el && lbl) lbl.textContent = (+el.value).toFixed(digits);
+  };
+  syncLabel('ttsSpeed','lblSpeed');
+  syncLabel('ttsStability','lblStab');
+  syncLabel('ttsSimilarity','lblSim');
+  syncLabel('ttsStyle','lblStyle');
+  updateTTSSummary();
 }
 
 window.addEventListener('load', () => {
   loadKeys();
   SAVE_KEYS.forEach(id => {
-    document.getElementById(id)?.addEventListener('input', saveKeys);
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', saveKeys);
+    el.addEventListener('change', saveKeys);
   });
   checkCapCutPath();
+  updateStepFlow('setup');
 });
+
+// ── TTS 프리셋 / 파일명 파싱 ───────────────────────────
+function parseTTSPreset() {
+  const v = document.getElementById('ttsPresetInput').value.trim();
+  const resultEl = document.getElementById('ttsPresetResult');
+  if (!v) { resultEl.innerHTML = ''; return; }
+  // ElevenLabs 파일명 패턴: ..._sp100_s50_sb75_v3(.mp3)?
+  const spMatch = v.match(/_sp(\d{2,3})/);
+  const stMatch = v.match(/_s(\d{2,3})(?![a-z])/);
+  const sbMatch = v.match(/_sb(\d{2,3})/);
+  const styleMatch = v.match(/_st(\d{2,3})/);
+  const modelMatch = v.match(/_(v3|v2|flash)(?:\.|$|_)/);
+  const voiceMatch = v.match(/ElevenLabs_[0-9TZ:_-]+_([A-Za-z][^_]*(?:_-_[^_]*)*)(?=_pre|_sp)/);
+  let found = [];
+  if (spMatch) { const s = (+spMatch[1]/100).toFixed(2); document.getElementById('ttsSpeed').value=s; document.getElementById('lblSpeed').textContent=s; found.push('속도 '+s); }
+  if (stMatch) { const s = (+stMatch[1]/100).toFixed(2); document.getElementById('ttsStability').value=s; document.getElementById('lblStab').textContent=s; found.push('안정성 '+s); }
+  if (sbMatch) { const s = (+sbMatch[1]/100).toFixed(2); document.getElementById('ttsSimilarity').value=s; document.getElementById('lblSim').textContent=s; found.push('유사도 '+s); }
+  if (styleMatch) { const s = (+styleMatch[1]/100).toFixed(2); document.getElementById('ttsStyle').value=s; document.getElementById('lblStyle').textContent=s; found.push('스타일 '+s); }
+  if (modelMatch) {
+    const m = modelMatch[1];
+    const map = {'v3':'eleven_v3','v2':'eleven_multilingual_v2','flash':'eleven_flash_v2_5'};
+    if (map[m]) { document.getElementById('ttsModel').value = map[m]; found.push('모델 '+map[m]); }
+  }
+  if (found.length) {
+    resultEl.innerHTML = `<span style="color:var(--ok)">✅ 자동 적용됨:</span> ${found.join(' · ')}`;
+    saveKeys();
+  } else {
+    resultEl.innerHTML = `<span style="color:var(--a2)">⚠️ 파싱 실패. ElevenLabs UI에서 다운받은 MP3 파일명인지 확인하세요.</span>`;
+  }
+}
+
+function applyTTSPreset(name) {
+  const presets = {
+    liam_energetic: {speed:1.0, stability:0.5, similarity:0.75, style:0, model:'eleven_v3', note:'Liam - Energetic Social Media Creator 프리셋'},
+  };
+  const p = presets[name];
+  if (!p) return;
+  document.getElementById('ttsSpeed').value = p.speed; document.getElementById('lblSpeed').textContent = p.speed.toFixed(2);
+  document.getElementById('ttsStability').value = p.stability; document.getElementById('lblStab').textContent = p.stability.toFixed(2);
+  document.getElementById('ttsSimilarity').value = p.similarity; document.getElementById('lblSim').textContent = p.similarity.toFixed(2);
+  document.getElementById('ttsStyle').value = p.style; document.getElementById('lblStyle').textContent = p.style.toFixed(2);
+  document.getElementById('ttsModel').value = p.model;
+  document.getElementById('ttsPresetResult').innerHTML = `<span style="color:var(--ok)">✅ ${p.note} 적용됨</span>`;
+  saveKeys();
+}
+
+function resetTTSDefaults() {
+  document.getElementById('ttsSpeed').value = 1; document.getElementById('lblSpeed').textContent = '1.00';
+  document.getElementById('ttsStability').value = 0.5; document.getElementById('lblStab').textContent = '0.50';
+  document.getElementById('ttsSimilarity').value = 0.75; document.getElementById('lblSim').textContent = '0.75';
+  document.getElementById('ttsStyle').value = 0; document.getElementById('lblStyle').textContent = '0.00';
+  document.getElementById('ttsModel').value = 'eleven_multilingual_v2';
+  document.getElementById('ttsPresetResult').innerHTML = '';
+  saveKeys();
+}
+
+function updateTTSSummary() {
+  const el = document.getElementById('ttsSettingSummary');
+  if (!el) return;
+  const speed = document.getElementById('ttsSpeed')?.value || '1';
+  const stab = document.getElementById('ttsStability')?.value || '0.5';
+  const sim = document.getElementById('ttsSimilarity')?.value || '0.75';
+  const style = document.getElementById('ttsStyle')?.value || '0';
+  const model = document.getElementById('ttsModel')?.value || 'eleven_multilingual_v2';
+  el.innerHTML = `📋 현재 설정: <b>${model}</b> · 속도 ${(+speed).toFixed(2)} · 안정성 ${(+stab).toFixed(2)} · 유사도 ${(+sim).toFixed(2)} · 스타일 ${(+style).toFixed(2)}`;
+}
 
 // ── CapCut 폴더 감지 ──────────────────────────────────
 async function checkCapCutPath() {
@@ -470,6 +618,26 @@ function switchTab(t) {
       document.getElementById('projectName').value = `야찌곰_${selectedTopic.slice(0,30)}`;
     }
   }
+  // 탭 이동 시 기본 진행 단계 매핑
+  const tabToStep = {setup:'setup', ideas:'ideas', generate:'script', post:'tts', result:'capcut'};
+  updateStepFlow(tabToStep[t] || 'setup');
+}
+
+// 상단 진행 인디케이터 업데이트
+// step: 'setup'|'ideas'|'script'|'image'|'tts'|'capcut'
+// done: 완료까지로 표시할 최대 단계 (선택적)
+function updateStepFlow(activeStep, doneUntil) {
+  const order = ['setup','ideas','script','image','tts','capcut'];
+  const activeIdx = order.indexOf(activeStep);
+  if (activeIdx === -1) return;
+  const doneIdx = doneUntil !== undefined ? order.indexOf(doneUntil) : activeIdx - 1;
+  document.querySelectorAll('#stepFlow .sf-item').forEach(el => {
+    const s = el.dataset.step;
+    const i = order.indexOf(s);
+    el.classList.remove('active','done');
+    if (i < activeIdx && i <= doneIdx) el.classList.add('done');
+    else if (i === activeIdx) el.classList.add('active');
+  });
 }
 
 // ── URL 추가 ─────────────────────────────────────────
@@ -515,24 +683,115 @@ async function getIdeas(regen) {
   const target = document.getElementById('target').value;
   const useWeb = document.getElementById('useWeb').checked;
   const exclude = regen ? allIdeas : [];
-  document.getElementById('ideasGrid').innerHTML = '<div style="color:var(--m);font-size:12px;padding:10px">아이디어 생성 중...</div>';
+  
+  // 스피너 + 로딩 UI
+  showSpinner('💡 아이디어 생성 중', `${target} 타겟 · ${useWeb ? '오늘 뉴스 기반' : '일반'}`);
+  updateStepFlow('ideas');
+  document.getElementById('ideasGrid').innerHTML = `
+    <div id="ideasLoading" style="background:var(--s2);border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--m);line-height:1.8;max-height:200px;overflow-y:auto">
+      <div style="color:var(--a);margin-bottom:4px">⏳ 아이디어 생성 시작...</div>
+    </div>`;
+  
   try {
-    await fetch('/get-ideas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({claude_key:claudeKey,target,use_web:useWeb,exclude})});
+    const r = await fetch('/get-ideas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({claude_key:claudeKey,target,use_web:useWeb,exclude})});
+    const initData = await r.json();
+    if (initData.error) {
+      throw new Error(initData.error);
+    }
     pollIdeas();
-  } catch(e) { alert('오류: '+e.message); }
+  } catch(e) {
+    hideSpinner();
+    showIdeasError(e.message, []);
+  }
 }
 
+let ideasLastLogCount = 0;
+
 function pollIdeas() {
+  ideasLastLogCount = 0;
+  const startTime = Date.now();
+  const TIMEOUT_MS = 90 * 1000; // 90초
+  
   const iv = setInterval(async()=>{
-    const r = await fetch('/state');
-    const d = await r.json();
-    if (d.status==='ideas_ready' && d.ideas.length>0) {
+    try {
+      // 타임아웃 체크
+      if (Date.now() - startTime > TIMEOUT_MS) {
+        clearInterval(iv);
+        hideSpinner();
+        const r = await fetch('/state');
+        const d = await r.json();
+        showIdeasError('⏱️ 타임아웃 (90초 초과). 서버 응답이 너무 느려요. 재시도하거나 웹검색을 꺼보세요.', d.logs || []);
+        return;
+      }
+      
+      const r = await fetch('/state');
+      const d = await r.json();
+      
+      // 실시간 로그 업데이트 - 스피너 서브텍스트 + 로딩 박스 안에 표시
+      if (d.logs.length > ideasLastLogCount) {
+        const loadingEl = document.getElementById('ideasLoading');
+        for (let i = ideasLastLogCount; i < d.logs.length; i++) {
+          const log = d.logs[i];
+          // 스피너 서브텍스트에 최신 로그
+          document.getElementById('spinnerSub').textContent = log.msg.slice(0, 50);
+          // 로딩 박스에 누적
+          if (loadingEl) {
+            const line = document.createElement('div');
+            line.className = log.type==='ok'?'lok':log.type==='err'?'lerr':'linfo';
+            line.textContent = `[${log.time}] ${log.msg}`;
+            loadingEl.appendChild(line);
+            loadingEl.scrollTop = loadingEl.scrollHeight;
+          }
+        }
+        ideasLastLogCount = d.logs.length;
+      }
+      
+      if (d.status==='ideas_ready' && d.ideas.length>0) {
+        clearInterval(iv);
+        hideSpinner();
+        allIdeas = [...allIdeas, ...d.ideas];
+        renderIdeas(d.ideas);
+      }
+      if (d.status==='error') {
+        clearInterval(iv);
+        hideSpinner();
+        // 로그에서 에러 메시지 추출 (마지막 err 타입 로그 또는 전체)
+        const errLogs = d.logs.filter(l => l.type === 'err');
+        const lastErr = errLogs.length > 0 ? errLogs[errLogs.length-1].msg : '원인 불명';
+        showIdeasError(lastErr, d.logs);
+      }
+    } catch(e) {
       clearInterval(iv);
-      allIdeas = [...allIdeas, ...d.ideas];
-      renderIdeas(d.ideas);
+      hideSpinner();
+      showIdeasError('네트워크 오류: ' + e.message, []);
     }
-    if (d.status==='error') { clearInterval(iv); document.getElementById('ideasGrid').innerHTML='<div style="color:var(--a2)">오류 발생</div>'; }
-  }, 1500);
+  }, 1200);
+}
+
+function showIdeasError(msg, allLogs) {
+  const g = document.getElementById('ideasGrid');
+  const logHtml = allLogs && allLogs.length > 0
+    ? `<details style="margin-top:10px;font-size:11px"><summary style="cursor:pointer;color:var(--m)">🔍 전체 로그 보기 (${allLogs.length}개)</summary>
+        <div style="background:var(--bg);padding:10px;border-radius:6px;margin-top:6px;font-family:'JetBrains Mono',monospace;max-height:200px;overflow-y:auto">
+        ${allLogs.map(l => `<div class="${l.type==='ok'?'lok':l.type==='err'?'lerr':'linfo'}">[${l.time}] ${l.msg}</div>`).join('')}
+        </div></details>`
+    : '';
+  g.innerHTML = `
+    <div style="background:rgba(255,101,132,.08);border:1px solid rgba(255,101,132,.3);border-radius:8px;padding:14px">
+      <div style="color:var(--a2);font-weight:700;margin-bottom:6px">❌ 아이디어 생성 실패</div>
+      <div style="color:var(--t);font-size:12px;word-break:break-all">${msg}</div>
+      ${logHtml}
+      <div style="margin-top:10px;display:flex;gap:6px">
+        <button class="mini-btn" onclick="getIdeas(false)">🔄 다시 시도</button>
+        <button class="mini-btn" onclick="getIdeasWithoutWeb()">🌐 웹검색 끄고 재시도</button>
+      </div>
+    </div>`;
+}
+
+// 웹검색 OFF로 재시도 (Claude web_search 관련 에러 대비)
+function getIdeasWithoutWeb() {
+  document.getElementById('useWeb').checked = false;
+  getIdeas(false);
 }
 
 function renderIdeas(ideas) {
@@ -576,6 +835,7 @@ async function runScriptOnly() {
   document.getElementById('logBox').classList.add('show');
   lastLogCount = 0;
   showSpinner('✍️ 대본 생성 중', 'Claude AI 처리 중');
+  updateStepFlow('script', 'ideas');
   setStep('s1','active','생성 중...');
   await fetch('/generate-script',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({claude_key:claudeKey,topic:selectedTopic})});
   await waitForStatus('script_ready');
@@ -605,6 +865,7 @@ async function runImagesOnly() {
   if (!falKey) { alert('FAL API 키를 입력해주세요'); switchTab('setup'); return; }
   document.getElementById('logBox').classList.add('show');
   showSpinner('🎨 이미지 생성 중', 'fal.ai LoRA 처리 중');
+  updateStepFlow('image', 'script');
   setStep('s3','active','생성 중...');
   await fetch('/generate-images',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fal_key:falKey,lora_url:loraUrl,md_content:d.md_content})});
   await waitForStatus('done');
@@ -627,6 +888,7 @@ async function runAll() {
   document.getElementById('runBtn').disabled = true;
   document.getElementById('runBtn').textContent = '⏳ 실행 중...';
   showSpinner('✍️ 대본 생성 중', 'Claude AI 처리 중');
+  updateStepFlow('script', 'ideas');
   document.getElementById('logBox').innerHTML = '';
   document.getElementById('logBox').classList.add('show');
   lastLogCount = 0;
@@ -641,6 +903,7 @@ async function runAll() {
 
   const stateData = await (await fetch('/state')).json();
   showSpinner('🎨 이미지 생성 중', 'fal.ai LoRA 처리 중');
+  updateStepFlow('image', 'script');
   setStep('s3','active','생성 중...');
   await fetch('/generate-images',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fal_key:falKey,lora_url:loraUrl,md_content:stateData.md_content})});
   await waitForStatus('done');
@@ -796,6 +1059,10 @@ async function runTTSOnly() {
   const key = document.getElementById('elevenKey').value.trim();
   const vid = document.getElementById('voiceId').value.trim();
   const model = document.getElementById('ttsModel').value;
+  const speed = parseFloat(document.getElementById('ttsSpeed').value);
+  const stability = parseFloat(document.getElementById('ttsStability').value);
+  const similarity = parseFloat(document.getElementById('ttsSimilarity').value);
+  const style = parseFloat(document.getElementById('ttsStyle').value);
   if (!key || !vid) {
     alert('ElevenLabs API 키와 Voice ID를 설정 탭에서 입력해주세요');
     switchTab('setup');
@@ -810,17 +1077,36 @@ async function runTTSOnly() {
   
   lastLogCount = d.logs.length;
   showSpinner('🎤 TTS 생성 중', 'ElevenLabs 처리 중');
+  updateStepFlow('tts', 'image');
   setStep('s4','active','생성 중...');
   
-  await fetch('/generate-tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({eleven_key:key,voice_id:vid,model_id:model})});
-  await waitForPostStatus('tts_ready');
-  
-  const final = await (await fetch('/state')).json();
-  const total = (final.audio_files||[]).reduce((s,a)=>s+a.duration_sec,0);
-  setStep('s4','done',`${(final.audio_files||[]).length}개 / ${total.toFixed(1)}s`);
-  document.getElementById('ttsInfo').textContent = `✅ 완료: ${(final.audio_files||[]).length}개 음성 (총 ${total.toFixed(1)}초)`;
-  document.getElementById('ttsInfo').className = 'info-line ok';
-  hideSpinner();
+  try {
+    const r = await fetch('/generate-tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      eleven_key:key, voice_id:vid, model_id:model,
+      speed, stability, similarity_boost: similarity, style
+    })});
+    const startRes = await r.json();
+    if (startRes.error) throw new Error(startRes.error);
+    
+    const final = await waitForPostStatus('tts_ready');
+    
+    if (final.status === 'error') {
+      const errLogs = final.logs.filter(l => l.type === 'err');
+      const errMsg = errLogs.length > 0 ? errLogs[errLogs.length-1].msg : 'TTS 생성 실패';
+      throw new Error(errMsg);
+    }
+    
+    const total = (final.audio_files||[]).reduce((s,a)=>s+a.duration_sec,0);
+    setStep('s4','done',`${(final.audio_files||[]).length}개 / ${total.toFixed(1)}s`);
+    document.getElementById('ttsInfo').textContent = `✅ 완료: ${(final.audio_files||[]).length}개 음성 (총 ${total.toFixed(1)}초)`;
+    document.getElementById('ttsInfo').className = 'info-line ok';
+  } catch(e) {
+    setStep('s4','','실패');
+    document.getElementById('ttsInfo').textContent = '❌ ' + e.message;
+    document.getElementById('ttsInfo').className = 'info-line err';
+  } finally {
+    hideSpinner();
+  }
 }
 
 // ── CapCut만 실행 ────────────────────────────────────
@@ -833,6 +1119,7 @@ async function runCapCutOnly() {
   const projectName = document.getElementById('projectName').value.trim() || `야찌곰_${selectedTopic.slice(0,30)}`;
   
   showSpinner('🎬 CapCut 조립 중', 'draft JSON 생성');
+  updateStepFlow('capcut', 'tts');
   setStep('s5','active','조립 중...');
   
   try {
@@ -905,15 +1192,36 @@ async function runPostProduction() {
   document.getElementById('postRunBtn').textContent = '🚀 음성 + CapCut 자동 실행';
 }
 
-// TTS/CapCut용 폴링 (기존 waitForStatus와 별개 상태 사용)
+// TTS/CapCut용 폴링 (로그 + 스피너 상태 업데이트)
 async function waitForPostStatus(targetStatus) {
   return new Promise(resolve => {
+    let localLogCount = 0;
+    // 시작 시점의 로그 개수를 기준으로 (기존 로그 무시)
+    fetch('/state').then(r=>r.json()).then(d => {
+      localLogCount = d.logs.length;
+    });
+    
     const iv = setInterval(async()=>{
-      const r = await fetch('/state');
-      const d = await r.json();
-      // 로그는 별도 처리 없이 콘솔만
-      if (d.status === targetStatus || d.status === 'error') { clearInterval(iv); resolve(d); }
-    }, 1500);
+      try {
+        const r = await fetch('/state');
+        const d = await r.json();
+        
+        // 새 로그만 스피너 서브텍스트에 표시
+        if (d.logs.length > localLogCount) {
+          const latest = d.logs[d.logs.length - 1];
+          document.getElementById('spinnerSub').textContent = latest.msg.slice(0, 50);
+          localLogCount = d.logs.length;
+        }
+        
+        if (d.status === targetStatus || d.status === 'error') { 
+          clearInterval(iv); 
+          resolve(d); 
+        }
+      } catch(e) {
+        clearInterval(iv);
+        resolve({status: 'error', error: e.message, logs: []});
+      }
+    }, 1200);
   });
 }
 </script>

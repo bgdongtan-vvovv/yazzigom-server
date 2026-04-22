@@ -24,7 +24,8 @@ def parse_scenes_from_md(md_content: str) -> list[dict]:
     """
     대본 MD에서 장면별 나레이션 추출.
     
-    현재 server.py가 만드는 MD 구조:
+    server.py v2.15 MD 구조:
+        ## 이미지 생성 명령어
         ### 장면 1
         **대본:** [해당 장면 대본]
         [이미지 프롬프트]
@@ -49,19 +50,28 @@ def parse_scenes_from_md(md_content: str) -> list[dict]:
         scene_no = int(parts[i])
         body = parts[i + 1] if i + 1 < len(parts) else ""
         
-        # **대본:** 뒤의 줄이 나레이션
-        narr_match = re.search(r'\*\*대본:\*\*\s*(.+?)(?:\n|$)', body)
+        # **대본:** 뒤의 내용 추출 - 다음 빈 줄 또는 대괄호 프롬프트 시작까지
+        narr_match = re.search(
+            r'\*\*대본:\*\*\s*(.+?)(?=\n\s*\n|\n\s*\[|$)',
+            body,
+            re.DOTALL
+        )
         narration = narr_match.group(1).strip() if narr_match else ""
-        # [ ... ] 대괄호 안 placeholder 제거
-        narration = re.sub(r'\[.*?\]', '', narration).strip()
+        # [ ... ] 대괄호 placeholder 제거 (예: [장면 1 대본 그대로 복사])
+        narration = re.sub(r'\[[^\]]*?\]', '', narration).strip()
+        # 빈 줄 제거, 공백 정리
+        narration = re.sub(r'\s+', ' ', narration).strip()
         
-        # 나머지 줄 = 이미지 프롬프트
-        prompt_lines = [
-            l.strip() for l in body.split('\n')
-            if l.strip()
-            and not l.strip().startswith('**대본:**')
-            and l.strip() != '---'
-        ]
+        # 이미지 프롬프트: 대본 뒤, [로 시작하는 라인들
+        prompt_lines = []
+        after_narr = False
+        for line in body.split('\n'):
+            stripped = line.strip()
+            if stripped.startswith('**대본:**'):
+                after_narr = True
+                continue
+            if after_narr and stripped and stripped != '---':
+                prompt_lines.append(stripped)
         prompt = ' '.join(prompt_lines)
         
         if narration:  # 나레이션 있는 장면만
@@ -83,6 +93,7 @@ def tts_generate(
     stability: float = 0.5,
     similarity_boost: float = 0.75,
     style: float = 0.0,
+    speed: float = 1.0,
 ) -> dict:
     """
     ElevenLabs로 TTS 생성.
@@ -99,15 +110,20 @@ def tts_generate(
         "Accept": "audio/mpeg",
     }
     
+    # voice_settings 구성 - eleven_v3는 use_speaker_boost 지원 안 함
+    voice_settings = {
+        "stability": stability,
+        "similarity_boost": similarity_boost,
+        "style": style,
+        "speed": speed,
+    }
+    if "v3" not in model_id:
+        voice_settings["use_speaker_boost"] = True
+    
     body = {
         "text": text,
         "model_id": model_id,
-        "voice_settings": {
-            "stability": stability,
-            "similarity_boost": similarity_boost,
-            "style": style,
-            "use_speaker_boost": True,
-        },
+        "voice_settings": voice_settings,
     }
     
     try:
@@ -160,6 +176,10 @@ def tts_generate_batch(
     api_key: str,
     output_dir: Path,
     model_id: str = DEFAULT_MODEL,
+    stability: float = 0.5,
+    similarity_boost: float = 0.75,
+    style: float = 0.0,
+    speed: float = 1.0,
     on_progress=None,
 ) -> list[dict]:
     """
@@ -184,6 +204,10 @@ def tts_generate_batch(
             api_key=api_key,
             output_path=out,
             model_id=model_id,
+            stability=stability,
+            similarity_boost=similarity_boost,
+            style=style,
+            speed=speed,
         )
         
         item = {
